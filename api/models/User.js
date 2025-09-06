@@ -28,14 +28,15 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: 100,
     },
-
     profileImageUrl: String,
     phone: String,
     dateOfBirth: Date,
 
+    // Authentication providers
     googleId: { type: String, sparse: true },
     appleId: { type: String, sparse: true },
 
+    // User preferences
     budgetRange: {
       type: String,
       enum: ["budget", "mid-range", "luxury"],
@@ -47,15 +48,38 @@ const userSchema = new mongoose.Schema(
         enum: ["nature", "culture", "food", "wildlife", "renewable-energy"],
       },
     ],
-    preferredLanguage: { type: String, default: "en" },
-    currency: { type: String, default: "USD" },
+    preferredLanguage: {
+      type: String,
+      default: "en",
+    },
+    currency: {
+      type: String,
+      default: "USD",
+    },
 
-    totalEcoPoints: { type: Number, default: 0 },
-    ecoLevel: { type: Number, default: 1 },
+    // Gamification
+    totalEcoPoints: {
+      type: Number,
+      default: 0,
+    },
+    ecoLevel: {
+      type: Number,
+      default: 1,
+    },
 
-    isActive: { type: Boolean, default: true },
-    isAdmin: { type: Boolean, default: false },
-    emailVerified: { type: Boolean, default: false },
+    // Metadata
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
     lastLoginAt: Date,
   },
   {
@@ -63,22 +87,26 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// Indexes
 userSchema.index({ email: 1 });
 userSchema.index({ googleId: 1 });
 userSchema.index({ appleId: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ createdAt: 1 });
 
+// Password hashing middleware
 userSchema.pre("save", async function (next) {
   if (!this.isModified("passwordHash") || !this.passwordHash) return next();
   this.passwordHash = await bcrypt.hash(this.passwordHash, 12);
   next();
 });
 
+// Compare password method
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
+// Remove sensitive information from JSON output
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.passwordHash;
