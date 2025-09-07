@@ -1,15 +1,24 @@
-import { Text, View } from "react-native";
+import React from "react";
+import { View } from "react-native";
+import { useRouter } from "expo-router";
+import { useAppState } from "../hooks/useAppState";
 
-export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
-}
+// This screen just redirects to the appropriate screen
+const IndexScreen: React.FC = () => {
+  const { isLoggedIn, onboardingCompleted } = useAppState();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (!isLoggedIn) {
+      router.replace("/auth");
+    } else if (!onboardingCompleted) {
+      router.replace("/onboarding");
+    } else {
+      router.replace("/discover");
+    }
+  }, [isLoggedIn, onboardingCompleted, router]);
+
+  return <View />;
+};
+
+export default IndexScreen;

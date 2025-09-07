@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { User, Itinerary } from "../types";
+import { sampleItinerary } from "../constants/Data";
 
 export const useAppState = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [savedItineraries, setSavedItineraries] = useState<Itinerary[]>([]);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [registeredEvents, setRegisteredEvents] = useState<string[]>([]);
+  const [generatedItinerary, setGeneratedItinerary] =
+    useState<Itinerary | null>(null);
 
   // Load state from storage on mount
   useEffect(() => {
-    // Simulate loading from storage
     const loadAppState = async () => {
       // In a real app, you would load from AsyncStorage or similar
       const demoUser = {
@@ -20,12 +23,16 @@ export const useAppState = () => {
       };
 
       setUser(demoUser);
-      // Check if user was previously logged in
-      // setIsLoggedIn(true);
+      // Simulate loading saved itineraries
+      setSavedItineraries([sampleItinerary]);
+      // Simulate loading registered events
+      setRegisteredEvents(["forest-cleanup", "urban-garden"]);
     };
 
-    loadAppState();
-  }, []);
+    if (isLoggedIn) {
+      loadAppState();
+    }
+  }, [isLoggedIn]);
 
   const signIn = (email: string, password: string) => {
     // Simulate authentication
@@ -37,6 +44,9 @@ export const useAppState = () => {
   const signOut = () => {
     setIsLoggedIn(false);
     setUser(null);
+    setSavedItineraries([]);
+    setRegisteredEvents([]);
+    setGeneratedItinerary(null);
   };
 
   const completeOnboarding = () => {
@@ -47,14 +57,51 @@ export const useAppState = () => {
     setSavedItineraries([...savedItineraries, itinerary]);
   };
 
+  const generateItinerary = (
+    destination: string,
+    dates: string,
+    budget: string,
+    interests: string[]
+  ) => {
+    // In a real app, this would call an API or use more complex logic
+    const newItinerary: Itinerary = {
+      ...sampleItinerary,
+      id: Date.now().toString(),
+      destination,
+      dates,
+      budget,
+      interests,
+    };
+    setGeneratedItinerary(newItinerary);
+    return newItinerary;
+  };
+
+  const registerForEvent = (eventId: string) => {
+    setRegisteredEvents([...registeredEvents, eventId]);
+  };
+
+  const cancelEventRegistration = (eventId: string) => {
+    setRegisteredEvents(registeredEvents.filter((id) => id !== eventId));
+  };
+
+  const isRegisteredForEvent = (eventId: string) => {
+    return registeredEvents.includes(eventId);
+  };
+
   return {
     isLoggedIn,
     user,
     savedItineraries,
     onboardingCompleted,
+    generatedItinerary,
+    registeredEvents,
     signIn,
     signOut,
     completeOnboarding,
     saveItinerary,
+    generateItinerary,
+    registerForEvent,
+    cancelEventRegistration,
+    isRegisteredForEvent,
   };
 };
