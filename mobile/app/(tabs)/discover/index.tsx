@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { EcoPlace } from "../../../types";
+import FloatingActionButton from "@/components/FloatingActionButton";
 
 const mockEcoPlaces: EcoPlace[] = [
   {
@@ -121,6 +122,12 @@ export default function DiscoverScreen() {
           showsVerticalScrollIndicator={false}
         />
       </View>
+      <FloatingActionButton
+        icon="filter"
+        onPress={() =>
+          alert("Filter options: Type, Location, Rating, Price Range")
+        }
+      />
     </SafeAreaView>
   );
 }

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import ItineraryCard from "../../../components/ItineraryCard";
 import { Itinerary } from "../../../types";
+import FloatingActionButton from "@/components/FloatingActionButton";
 
 export default function PlanScreen() {
   const [destination, setDestination] = useState("Portland, OR");
@@ -150,6 +151,12 @@ export default function PlanScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      <FloatingActionButton
+        icon="filter"
+        onPress={() =>
+          alert("Filter options: Type, Location, Rating, Price Range")
+        }
+      />
     </SafeAreaView>
   );
 }
