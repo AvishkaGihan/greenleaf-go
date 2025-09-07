@@ -9,7 +9,7 @@ import {
 } from "../controllers/userController";
 import { authenticate } from "../middleware/auth";
 import { updateProfileValidation } from "../middleware/validation/userValidation";
-import { upload } from "../middleware/upload";
+import { upload } from "../middleware/uploadMulter";
 
 const router = express.Router();
 
