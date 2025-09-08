@@ -35,6 +35,17 @@ export interface EcoPlace {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  reviewsSummary?: {
+    averageRating: number;
+    totalReviews: number;
+    averageEcoRating: number;
+    ratingDistribution: { [key: string]: number };
+  };
+  nearbyAttractions?: {
+    name: string;
+    type: string;
+    distance: number | null;
+  }[];
 }
 
 export interface Review {

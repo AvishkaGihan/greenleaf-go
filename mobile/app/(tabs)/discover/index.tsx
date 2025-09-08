@@ -67,17 +67,21 @@ export default function DiscoverScreen() {
       return priceMap[priceRange as keyof typeof priceMap] || priceRange;
     };
 
-    // Calculate ecoRating from available scores
-    const scores = [
-      item.energyEfficiencyScore || 0,
-      item.wasteManagementScore || 0,
-      item.waterConservationScore || 0,
-      item.localSourcingScore || 0,
-      item.carbonFootprintScore || 0,
-    ].filter((score) => score > 0);
-
+    // Use ecoRating from API or calculate from available scores as fallback
     const ecoRating =
-      scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+      item.ecoRating ||
+      (() => {
+        const scores = [
+          item.energyEfficiencyScore || 0,
+          item.wasteManagementScore || 0,
+          item.waterConservationScore || 0,
+          item.localSourcingScore || 0,
+          item.carbonFootprintScore || 0,
+        ].filter((score) => score > 0);
+        return scores.length > 0
+          ? scores.reduce((a, b) => a + b, 0) / scores.length
+          : 0;
+      })();
 
     return (
       <TouchableOpacity

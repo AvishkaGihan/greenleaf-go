@@ -94,8 +94,22 @@ export const getAccommodations = async (req, res, next) => {
           },
         ]);
 
+        // Calculate ecoRating from individual scores
+        const scores = [
+          acc.energyEfficiencyScore,
+          acc.wasteManagementScore,
+          acc.waterConservationScore,
+          acc.localSourcingScore,
+          acc.carbonFootprintScore,
+        ].filter((score) => score != null);
+
+        const ecoRating = scores.length
+          ? scores.reduce((a, b) => a + b) / scores.length
+          : null;
+
         return {
           ...acc,
+          ecoRating,
           averageReviewRating: reviewStats[0]?.averageRating || 0,
           reviewCount: reviewStats[0]?.count || 0,
         };
@@ -164,10 +178,24 @@ export const getAccommodation = async (req, res, next) => {
       .select("name type")
       .lean();
 
+    // Calculate ecoRating from individual scores
+    const scores = [
+      accommodation.energyEfficiencyScore,
+      accommodation.wasteManagementScore,
+      accommodation.waterConservationScore,
+      accommodation.localSourcingScore,
+      accommodation.carbonFootprintScore,
+    ].filter((score) => score != null);
+
+    const ecoRating = scores.length
+      ? scores.reduce((a, b) => a + b) / scores.length
+      : null;
+
     res.json({
       success: true,
       data: {
         ...accommodation,
+        ecoRating,
         reviewsSummary: {
           averageRating: reviewStats[0]?.averageRating || 0,
           totalReviews: reviewStats[0]?.count || 0,

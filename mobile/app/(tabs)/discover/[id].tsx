@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Share,
   Alert,
+  ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
@@ -13,68 +15,44 @@ import { Ionicons } from "@expo/vector-icons";
 import { EcoPlace } from "../../../types";
 import EcoRating from "../../../components/EcoRating";
 import BackButton from "@/components/BackButton";
-
-const mockEcoPlaces: EcoPlace[] = [
-  {
-    id: "1",
-    name: "Green Haven Hotel",
-    type: "hotel",
-    rating: 5,
-    address: "123 Eco Street, Portland, OR",
-    price: "$120-180/night",
-    description:
-      "A LEED-certified hotel committed to environmental sustainability. Features solar panels, rainwater harvesting, and organic gardens.",
-    sustainability: { energy: 90, waste: 85, water: 95 },
-    reviews: [
-      {
-        id: "1",
-        author: "Sarah M.",
-        rating: 5,
-        comment:
-          "Amazing eco-friendly hotel! Solar-powered rooms and fantastic recycling program.",
-      },
-      {
-        id: "2",
-        author: "Mike T.",
-        rating: 5,
-        comment:
-          "Great location and really impressed by their sustainability efforts. Will stay again!",
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Organic Bites Cafe",
-    type: "restaurant",
-    rating: 4,
-    address: "456 Green Ave, Portland, OR",
-    price: "$$",
-    description:
-      "Farm-to-table restaurant with organic ingredients and zero-waste kitchen.",
-    sustainability: { energy: 80, waste: 90, water: 85 },
-    reviews: [
-      {
-        id: "1",
-        author: "Lisa K.",
-        rating: 4,
-        comment:
-          "Delicious organic food and great commitment to sustainability!",
-      },
-      {
-        id: "2",
-        author: "John D.",
-        rating: 5,
-        comment: "Love their zero-waste approach. Food is amazing!",
-      },
-    ],
-  },
-];
+import api from "@/api/client";
 
 export default function EcoPlaceDetailScreen() {
   const { id } = useLocalSearchParams();
+  const [place, setPlace] = useState<EcoPlace | null>(null);
+  const [loading, setLoading] = useState(true);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
 
-  const place = mockEcoPlaces.find((p) => p.id === id);
+  const fetchPlaceDetails = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get(`/accommodations/${id}`);
+      setPlace(data.data);
+    } catch (error) {
+      console.error("Failed to load place details:", error);
+      Alert.alert("Error", "Failed to load place details");
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchPlaceDetails();
+  }, [fetchPlaceDetails]);
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-background items-center justify-center">
+        <View className="w-28 h-28 bg-primary rounded-full items-center justify-center mb-6">
+          <Ionicons name="leaf" size={44} color="white" />
+        </View>
+        <ActivityIndicator size="large" color="#27ae60" />
+        <Text className="text-gray-600 mt-4 font-medium">
+          Loading place details...
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   if (!place) {
     return (
@@ -138,11 +116,21 @@ export default function EcoPlaceDetailScreen() {
 
         {/* Header Image */}
         <View className="h-48 bg-gray-200 items-center justify-center">
-          <Ionicons
-            name={place.type === "hotel" ? "business" : "restaurant"}
-            size={60}
-            color="#888"
-          />
+          {place.imageUrls && place.imageUrls.length > 0 ? (
+            <Image
+              source={{ uri: place.imageUrls[0] }}
+              className="w-full h-full"
+              resizeMode="cover"
+            />
+          ) : (
+            <View className="w-full h-full items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
+              <Ionicons
+                name={place.type === "hotel" ? "business" : "restaurant"}
+                size={60}
+                color="#27ae60"
+              />
+            </View>
+          )}
         </View>
 
         {/* Content */}
@@ -153,15 +141,15 @@ export default function EcoPlaceDetailScreen() {
             </Text>
 
             <View className="flex-row items-center mb-2">
-              {renderStars(place.rating)}
+              {renderStars(place.starRating || 0)}
               <Text className="text-gray-600 ml-2">
-                {place.rating}/5 Leaves
+                {place.starRating || 0}/5 Stars
               </Text>
             </View>
 
             <Text className="text-gray-600 mb-2">{place.address}</Text>
             <Text className="text-primary font-bold text-lg mb-4">
-              {place.price}
+              {place.priceRange}
             </Text>
 
             <View className="flex-row gap-3 mb-4">
@@ -201,34 +189,51 @@ export default function EcoPlaceDetailScreen() {
               Sustainability Breakdown
             </Text>
             <EcoRating
-              energy={place.sustainability.energy}
-              waste={place.sustainability.waste}
-              water={place.sustainability.water}
+              energy={place.energyEfficiencyScore || 0}
+              waste={place.wasteManagementScore || 0}
+              water={place.waterConservationScore || 0}
+              localSourcing={place.localSourcingScore || 0}
+              carbonFootprint={place.carbonFootprintScore || 0}
             />
           </View>
 
-          {/* Reviews */}
-          <View className="bg-white rounded-xl p-4 mb-4">
-            <Text className="text-lg font-semibold text-gray-800 mb-3">
-              Reviews
-            </Text>
-            {place.reviews.map((review) => (
-              <View
-                key={review.id}
-                className="bg-gray-50 p-3 rounded-lg mb-3 last:mb-0"
-              >
-                <View className="flex-row justify-between items-center mb-2">
-                  <Text className="font-semibold text-gray-800">
-                    {review.author}
-                  </Text>
-                  <View className="flex-row">{renderStars(review.rating)}</View>
-                </View>
-                <Text className="text-gray-700 text-sm">
-                  &ldquo;{review.comment}&rdquo;
-                </Text>
+          {/* Amenities */}
+          {place.amenities && place.amenities.length > 0 && (
+            <View className="bg-white rounded-xl p-4 mb-4">
+              <Text className="text-lg font-semibold text-gray-800 mb-3">
+                Amenities
+              </Text>
+              <View className="flex-row flex-wrap">
+                {place.amenities.map((amenity, index) => (
+                  <View
+                    key={index}
+                    className="bg-green-50 border border-green-200 px-3 py-1 rounded-full mr-2 mb-2"
+                  >
+                    <Text className="text-green-700 text-sm">{amenity}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </View>
+          )}
+
+          {/* Certifications */}
+          {place.certifications && place.certifications.length > 0 && (
+            <View className="bg-white rounded-xl p-4 mb-4">
+              <Text className="text-lg font-semibold text-gray-800 mb-3">
+                Certifications
+              </Text>
+              <View className="flex-row flex-wrap">
+                {place.certifications.map((cert, index) => (
+                  <View
+                    key={index}
+                    className="bg-blue-50 border border-blue-200 px-3 py-1 rounded-full mr-2 mb-2"
+                  >
+                    <Text className="text-blue-700 text-sm">{cert}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
 
           {savedConfirmation && (
             <View className="bg-green-100 border border-green-400 rounded-xl p-4 mb-4">
