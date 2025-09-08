@@ -8,6 +8,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../../../api/client";
 import { User, Badge, Itinerary } from "../../../types";
 
 const mockUser: User = {
@@ -97,6 +100,22 @@ const mockItineraries: Itinerary[] = [
 ];
 
 export default function ProfileScreen() {
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout API error:", error);
+    }
+    try {
+      await AsyncStorage.removeItem("accessToken");
+      await AsyncStorage.removeItem("refreshToken");
+      router.replace("/(auth)/sign-in");
+    } catch (error) {
+      console.error("Logout error:", error);
+      router.replace("/(auth)/sign-in");
+    }
+  };
+
   const renderBadge = ({ item }: { item: Badge }) => (
     <View
       className={`w-16 h-16 rounded-full items-center justify-center mr-3 mb-3 ${
@@ -167,6 +186,12 @@ export default function ProfileScreen() {
           </View>
           <TouchableOpacity className="bg-primary rounded-full py-2 items-center">
             <Text className="text-white font-semibold">Edit Profile</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="bg-red-500 rounded-full py-2 items-center mt-2"
+            onPress={logout}
+          >
+            <Text className="text-white font-semibold">Logout</Text>
           </TouchableOpacity>
         </View>
 
