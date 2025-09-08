@@ -1,5 +1,5 @@
 import { body, query } from "express-validator";
-import { handleValidationErrors } from "./authValidation";
+import { handleValidationErrors } from "./authValidation.js";
 
 const updateProfileValidation = [
   body("firstName")

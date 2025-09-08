@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User";
-import { AppError } from "../utils/errorHandler";
-import { sendEmail } from "../services/emailService";
+import User from "../models/User.js";
+import { AppError } from "../utils/errorHandler.js";
+import { sendEmail } from "../services/emailService.js";
 
 const generateTokens = (userId) => {
   const accessToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, {

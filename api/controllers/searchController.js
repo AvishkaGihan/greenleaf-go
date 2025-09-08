@@ -1,8 +1,8 @@
-import Accommodation from "../models/Accommodation";
-import Restaurant from "../models/Restaurant";
-import ConservationEvent from "../models/ConservationEvent";
-import { AppError } from "../utils/errorHandler";
-import { calculateDistance } from "../services/geoService";
+import Accommodation from "../models/Accommodation.js";
+import Restaurant from "../models/Restaurant.js";
+import ConservationEvent from "../models/ConservationEvent.js";
+import { AppError } from "../utils/errorHandler.js";
+import { calculateDistance } from "../services/geoService.js";
 
 export const globalSearch = async (req, res, next) => {
   try {

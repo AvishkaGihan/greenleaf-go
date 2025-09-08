@@ -7,13 +7,13 @@ import {
   rsvpEvent,
   cancelRsvp,
   checkInEvent,
-} from "../controllers/eventController";
-import { authenticate, authenticateAdmin } from "../middleware/auth";
+} from "../controllers/eventController.js";
+import { authenticate, authenticateAdmin } from "../middleware/auth.js";
 import {
   eventRsvpValidation,
   eventValidation,
   getEventsValidation,
-} from "../middleware/validation/eventValidation";
+} from "../middleware/validation/eventValidation.js";
 
 // Public routes
 router.get("/", getEventsValidation, getEvents);

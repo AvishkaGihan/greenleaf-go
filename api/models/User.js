@@ -88,9 +88,6 @@ const userSchema = new mongoose.Schema(
 );
 
 // Indexes
-userSchema.index({ email: 1 });
-userSchema.index({ googleId: 1 });
-userSchema.index({ appleId: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ createdAt: 1 });
 

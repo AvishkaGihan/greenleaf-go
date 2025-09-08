@@ -1,9 +1,8 @@
-import ConservationEvent from "../models/ConservationEvent";
-import EventRSVP from "../models/EventRSVP";
-import UserActivity from "../models/UserActivity";
-import { AppError } from "../utils/errorHandler";
-import { calculateDistance } from "../services/geoService";
-import { sendNotification } from "../services/notificationService";
+import ConservationEvent from "../models/ConservationEvent.js";
+import EventRSVP from "../models/EventRSVP.js";
+import UserActivity from "../models/UserActivity.js";
+import { AppError } from "../utils/errorHandler.js";
+import { calculateDistance } from "../services/geoService.js";
 
 export const getEvents = async (req, res, next) => {
   try {

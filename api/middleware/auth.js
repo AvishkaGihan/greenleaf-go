@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User";
-import AdminLog from "../models/AdminLog";
+import User from "../models/User.js";
+import AdminLog from "../models/AdminLog.js";
 
 const authenticate = async (req, res, next) => {
   try {

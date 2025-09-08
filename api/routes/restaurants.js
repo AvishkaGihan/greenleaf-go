@@ -6,12 +6,12 @@ import {
   createRestaurant,
   updateRestaurant,
   deleteRestaurant,
-} from "../controllers/restaurantController";
-import { authenticateAdmin } from "../middleware/auth";
+} from "../controllers/restaurantController.js";
+import { authenticateAdmin } from "../middleware/auth.js";
 import {
   getRestaurantsValidation,
   restaurantValidation,
-} from "../middleware/validation/restaurantValidation";
+} from "../middleware/validation/restaurantValidation.js";
 
 // Public routes
 router.get("/", getRestaurantsValidation, getRestaurants);

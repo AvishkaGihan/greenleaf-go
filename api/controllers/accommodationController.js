@@ -1,7 +1,7 @@
-import Accommodation from "../models/Accommodation";
-import Review from "../models/Review";
-import { AppError } from "../utils/errorHandler";
-import { calculateDistance } from "../services/geoService";
+import Accommodation from "../models/Accommodation.js";
+import Review from "../models/Review.js";
+import { AppError } from "../utils/errorHandler.js";
+import { calculateDistance } from "../services/geoService.js";
 
 export const getAccommodations = async (req, res, next) => {
   try {

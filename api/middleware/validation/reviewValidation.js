@@ -1,5 +1,5 @@
 import { body, query, param } from "express-validator";
-import { handleValidationErrors } from "./authValidation";
+import { handleValidationErrors } from "./authValidation.js";
 
 const reviewValidation = [
   body("rating")

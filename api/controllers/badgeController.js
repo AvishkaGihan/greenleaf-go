@@ -1,6 +1,6 @@
-import EcoBadge from "../models/EcoBadge";
-import UserBadge from "../models/UserBadge";
-import { AppError } from "../utils/errorHandler";
+import EcoBadge from "../models/EcoBadge.js";
+import UserBadge from "../models/UserBadge.js";
+import { AppError } from "../utils/errorHandler.js";
 
 export const getBadges = async (req, res, next) => {
   try {

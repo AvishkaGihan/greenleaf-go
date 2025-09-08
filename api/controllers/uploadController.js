@@ -1,5 +1,5 @@
-import { AppError } from "../utils/errorHandler";
-import { uploadToCloudinary } from "../services/uploadService";
+import { AppError } from "../utils/errorHandler.js";
+import { uploadToCloudinary } from "../services/uploadService.js";
 
 export const uploadImage = async (req, res, next) => {
   try {

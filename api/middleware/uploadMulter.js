@@ -1,16 +1,29 @@
 import multer from "multer";
+import path from "path";
+import { AppError } from "../utils/errorHandler.js";
 
-const storage = multer.memoryStorage(); // keeps file in memory as buffer
+// Configure multer for file uploads
+const storage = multer.memoryStorage();
+
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype && file.mimetype.startsWith("image/")) {
+  // Check file type
+  if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
-    cb(new Error("Only image files are allowed"), false);
+    cb(
+      new AppError("Only image files are allowed", 400, "VALIDATION_ERROR"),
+      false
+    );
   }
 };
 
-export const upload = multer({
+const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 10, // Maximum 10 files
+  },
 });
+
+export { upload };

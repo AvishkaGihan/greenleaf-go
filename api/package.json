@@ -4,7 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "jest --testTimeout=10000",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint **/*.js",
+    "lint:fix": "eslint **/*.js --fix",
+    "seed": "node scripts/seedData.js",
+    "migrate": "node scripts/migrateDatabase.js",
+    "docker:build": "docker build -t greenleaf-go .",
+    "docker:run": "docker run -p 5000:5000 greenleaf-go"
   },
   "keywords": [],
   "author": "",

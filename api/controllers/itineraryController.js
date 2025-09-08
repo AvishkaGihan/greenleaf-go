@@ -1,8 +1,8 @@
-import Itinerary from "../models/Itinerary";
-import ItineraryItem from "../models/ItineraryItem";
-import UserActivity from "../models/UserActivity";
-import { AppError } from "../utils/errorHandler";
-import { generateAISuggestions } from "../services/aiService";
+import Itinerary from "../models/Itinerary.js";
+import ItineraryItem from "../models/ItineraryItem.js";
+import UserActivity from "../models/UserActivity.js";
+import { AppError } from "../utils/errorHandler.js";
+import { generateAISuggestions } from "../services/aiService.js";
 
 export const getItineraries = async (req, res, next) => {
   try {

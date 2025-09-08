@@ -1,4 +1,5 @@
 import express from "express";
+const router = express.Router();
 import {
   register,
   login,
@@ -7,16 +8,14 @@ import {
   logout,
   forgotPassword,
   resetPassword,
-} from "../controllers/authController";
+} from "../controllers/authController.js";
 import {
   registerValidation,
   loginValidation,
   socialLoginValidation,
   forgotPasswordValidation,
   resetPasswordValidation,
-} from "../middleware/validation/authValidation";
-
-const router = express.Router();
+} from "../middleware/validation/authValidation.js";
 
 // Public routes
 router.post("/register", registerValidation, register);

@@ -1,4 +1,5 @@
 import express from "express";
+const router = express.Router();
 import {
   getAccommodations,
   getAccommodation,
@@ -6,19 +7,23 @@ import {
   updateAccommodation,
   deleteAccommodation,
   getAccommodationReviews,
-} from "../controllers/accommodationController";
-import { authenticate, authenticateAdmin } from "../middleware/auth";
+} from "../controllers/accommodationController.js";
+import { authenticateAdmin } from "../middleware/auth.js";
 import {
   accommodationValidation,
   updateAccommodationValidation,
-} from "../middleware/validation/accommodationValidation";
-
-const router = express.Router();
+  getAccommodationsValidation,
+  getAccommodationReviewsValidation,
+} from "../middleware/validation/accommodationValidation.js";
 
 // Public routes
-router.get("/", getAccommodations);
+router.get("/", getAccommodationsValidation, getAccommodations);
 router.get("/:id", getAccommodation);
-router.get("/:id/reviews", getAccommodationReviews);
+router.get(
+  "/:id/reviews",
+  getAccommodationReviewsValidation,
+  getAccommodationReviews
+);
 
 // Admin routes
 router.post(

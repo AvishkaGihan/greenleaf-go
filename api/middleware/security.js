@@ -7,15 +7,49 @@ const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
       ? ["https://yourdomain.com"]
-      : ["http://localhost:3000"],
+      : ["http://localhost:3000", "http://localhost:3001"],
   credentials: true,
+  optionsSuccessStatus: 200,
 };
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP",
-});
+// Rate limiting configuration
+const createRateLimiter = (windowMs, max, message) => {
+  return rateLimit({
+    windowMs,
+    max,
+    message: {
+      success: false,
+      error: {
+        code: "RATE_LIMIT_EXCEEDED",
+        message,
+        timestamp: new Date().toISOString(),
+      },
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+};
 
-export { corsOptions, limiter, helmet };
+// Different rate limits for different user types
+const limiter = createRateLimiter(
+  15 * 60 * 1000,
+  100,
+  "Too many requests from this IP, please try again later."
+);
+const authLimiter = createRateLimiter(
+  15 * 60 * 1000,
+  10,
+  "Too many authentication attempts, please try again later."
+);
+const userLimiter = createRateLimiter(
+  15 * 60 * 1000,
+  1000,
+  "Too many requests, please try again later."
+);
+const adminLimiter = createRateLimiter(
+  15 * 60 * 1000,
+  5000,
+  "Too many admin requests, please try again later."
+);
+
+export { corsOptions, limiter, authLimiter, userLimiter, adminLimiter, helmet };

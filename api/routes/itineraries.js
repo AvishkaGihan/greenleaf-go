@@ -11,13 +11,13 @@ import {
   addItineraryItem,
   updateItineraryItem,
   deleteItineraryItem,
-} from "../controllers/itineraryController";
-import { authenticate } from "../middleware/auth";
+} from "../controllers/itineraryController.js";
+import { authenticate } from "../middleware/auth.js";
 import {
   itineraryValidation,
   generateItineraryValidation,
   itineraryItemValidation,
-} from "../middleware/validation/itineraryValidation";
+} from "../middleware/validation/itineraryValidation.js";
 
 // All routes require authentication
 router.use(authenticate);

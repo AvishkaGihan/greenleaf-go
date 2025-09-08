@@ -1,5 +1,5 @@
 import { body, query, param } from "express-validator";
-import { handleValidationErrors } from "./authValidation";
+import { handleValidationErrors } from "./authValidation.js";
 
 const accommodationValidation = [
   body("name")
@@ -120,12 +120,76 @@ const updateAccommodationValidation = [
     .isLength({ max: 2000 })
     .withMessage("Description must be less than 2000 characters"),
 
-  // Include other fields as optional with same validation as above
-  ...accommodationValidation
-    .slice(1)
-    .map((validation) =>
-      validation.optional ? validation : validation.optional()
-    ),
+  body("address")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 500 })
+    .withMessage("Address must be less than 500 characters"),
+
+  body("city")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage("City must be less than 100 characters"),
+
+  body("country")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage("Country must be less than 100 characters"),
+
+  body("latitude")
+    .optional()
+    .isFloat({ min: -90, max: 90 })
+    .withMessage("Latitude must be between -90 and 90"),
+
+  body("longitude")
+    .optional()
+    .isFloat({ min: -180, max: 180 })
+    .withMessage("Longitude must be between -180 and 180"),
+
+  body("phone")
+    .optional()
+    .isMobilePhone()
+    .withMessage("Please provide a valid phone number"),
+
+  body("email")
+    .optional()
+    .isEmail()
+    .normalizeEmail()
+    .withMessage("Please provide a valid email address"),
+
+  body("website")
+    .optional()
+    .isURL()
+    .withMessage("Please provide a valid website URL"),
+
+  body("priceRange")
+    .optional()
+    .isIn(["budget", "mid-range", "luxury"])
+    .withMessage("Price range must be budget, mid-range, or luxury"),
+
+  body("amenities")
+    .optional()
+    .isArray()
+    .withMessage("Amenities must be an array"),
+
+  body("ecoCertifications")
+    .optional()
+    .isArray()
+    .withMessage("Eco certifications must be an array"),
+
+  body("sustainabilityRating")
+    .optional()
+    .isInt({ min: 1, max: 5 })
+    .withMessage("Sustainability rating must be between 1 and 5"),
+
+  body("imageUrls")
+    .optional()
+    .isArray()
+    .withMessage("Image URLs must be an array"),
+
+  handleValidationErrors,
 ];
 
 const getAccommodationsValidation = [

@@ -1,7 +1,7 @@
-import Restaurant from "../models/Restaurant";
-import Review from "../models/Review";
-import { AppError } from "../utils/errorHandler";
-import { calculateDistance } from "../services/geoService";
+import Restaurant from "../models/Restaurant.js";
+import Review from "../models/Review.js";
+import { AppError } from "../utils/errorHandler.js";
+import { calculateDistance } from "../services/geoService.js";
 
 export const getRestaurants = async (req, res, next) => {
   try {

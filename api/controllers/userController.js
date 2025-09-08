@@ -1,9 +1,9 @@
-import User from "../models/User";
-import UserBadge from "../models/UserBadge";
-import UserActivity from "../models/UserActivity";
-import Itinerary from "../models/Itinerary";
-import { AppError } from "../utils/errorHandler";
-import { uploadToCloudinary } from "../services/uploadService";
+import User from "../models/User.js";
+import UserBadge from "../models/UserBadge.js";
+import UserActivity from "../models/UserActivity.js";
+import Itinerary from "../models/Itinerary.js";
+import { AppError } from "../utils/errorHandler.js";
+import { uploadToCloudinary } from "../services/uploadService.js";
 
 export const getProfile = async (req, res, next) => {
   try {

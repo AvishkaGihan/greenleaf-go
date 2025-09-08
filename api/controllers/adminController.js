@@ -1,15 +1,15 @@
-import User from "../models/User";
-import Accommodation from "../models/Accommodation";
-import Restaurant from "../models/Restaurant";
-import ConservationEvent from "../models/ConservationEvent";
-import Review from "../models/Review";
-import EcoBadge from "../models/EcoBadge";
-import AdminLog from "../models/AdminLog";
-import EventRSVP from "../models/EventRSVP";
-import Itinerary from "../models/Itinerary";
-import UserActivity from "../models/UserActivity";
-import UserBadge from "../models/UserBadge";
-import { AppError } from "../utils/errorHandler";
+import User from "../models/User.js";
+import Accommodation from "../models/Accommodation.js";
+import Restaurant from "../models/Restaurant.js";
+import ConservationEvent from "../models/ConservationEvent.js";
+import Review from "../models/Review.js";
+import EcoBadge from "../models/EcoBadge.js";
+import AdminLog from "../models/AdminLog.js";
+import EventRSVP from "../models/EventRSVP.js";
+import Itinerary from "../models/Itinerary.js";
+import UserActivity from "../models/UserActivity.js";
+import UserBadge from "../models/UserBadge.js";
+import { AppError } from "../utils/errorHandler.js";
 
 // Dashboard Analytics
 export const getDashboard = async (req, res, next) => {

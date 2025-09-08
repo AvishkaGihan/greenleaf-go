@@ -1,23 +1,24 @@
 import "dotenv/config";
 import express from "express";
-import connectDB from "./config/database";
-import { corsOptions, limiter, helmet } from "./middleware/security";
-import { errorHandler } from "./utils/errorHandler";
+import cors from "cors";
+import connectDB from "./config/database.js";
+import { corsOptions, limiter, helmet } from "./middleware/security.js";
+import { errorHandler } from "./utils/errorHandler.js";
 
 // Route imports
-import authRoutes from "./routes/auth";
-import userRoutes from "./routes/users";
-import accommodationRoutes from "./routes/accommodations";
-import restaurantRoutes from "./routes/restaurants";
-import eventRoutes from "./routes/events";
-import itineraryRoutes from "./routes/itineraries";
-import reviewRoutes from "./routes/reviews";
-// import badgeRoutes from "./routes/badges";
-// import notificationRoutes from "./routes/notifications";
-// import adminRoutes from "./routes/admin";
-// import uploadRoutes from "./routes/upload";
-// import searchRoutes from "./routes/search";
-// import analyticsRoutes from "./routes/analytics";
+import authRoutes from "./routes/auth.js";
+import userRoutes from "./routes/users.js";
+import accommodationRoutes from "./routes/accommodations.js";
+import restaurantRoutes from "./routes/restaurants.js";
+import eventRoutes from "./routes/events.js";
+import itineraryRoutes from "./routes/itineraries.js";
+import reviewRoutes from "./routes/reviews.js";
+import badgeRoutes from "./routes/badges.js";
+import notificationRoutes from "./routes/notifications.js";
+import adminRoutes from "./routes/admin.js";
+import uploadRoutes from "./routes/upload.js";
+import searchRoutes from "./routes/search.js";
+import analyticsRoutes from "./routes/analytics.js";
 
 // Connect to database
 connectDB();
@@ -39,20 +40,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
+// API Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/accommodations", accommodationRoutes);
-// app.use("/api/v1/restaurants", restaurantRoutes);
-// app.use("/api/v1/events", eventRoutes);
-// app.use("/api/v1/itineraries", itineraryRoutes);
-// app.use("/api/v1/reviews", reviewRoutes);
-// app.use("/api/v1/badges", badgeRoutes);
-// app.use("/api/v1/notifications", notificationRoutes);
-// app.use("/api/v1/admin", adminRoutes);
-// app.use("/api/v1/upload", uploadRoutes);
-// app.use("/api/v1/search", searchRoutes);
-// app.use("/api/v1/analytics", analyticsRoutes);
+app.use("/api/v1/restaurants", restaurantRoutes);
+app.use("/api/v1/events", eventRoutes);
+app.use("/api/v1/itineraries", itineraryRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
+app.use("/api/v1/badges", badgeRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/upload", uploadRoutes);
+app.use("/api/v1/search", searchRoutes);
+app.use("/api/v1/analytics", analyticsRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
@@ -64,7 +65,7 @@ app.get("/health", (req, res) => {
 });
 
 // 404 handler
-app.use("*", (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     success: false,
     error: {

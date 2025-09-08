@@ -1,8 +1,8 @@
-import Review from "../models/Review";
-import Accommodation from "../models/Accommodation";
-import Restaurant from "../models/Restaurant";
-import UserActivity from "../models/UserActivity";
-import { AppError } from "../utils/errorHandler";
+import Review from "../models/Review.js";
+import Accommodation from "../models/Accommodation.js";
+import Restaurant from "../models/Restaurant.js";
+import UserActivity from "../models/UserActivity.js";
+import { AppError } from "../utils/errorHandler.js";
 
 export const getAccommodationReviews = async (req, res, next) => {
   try {

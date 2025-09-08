@@ -5,13 +5,13 @@ import {
   createAccommodationReview,
   createRestaurantReview,
   markReviewHelpful,
-} from "../controllers/reviewController";
-import { authenticate } from "../middleware/auth";
+} from "../controllers/reviewController.js";
+import { authenticate } from "../middleware/auth.js";
 import {
   accommodationReviewValidation,
   helpfulReviewValidation,
   restaurantReviewValidation,
-} from "../middleware/validation/reviewValidation";
+} from "../middleware/validation/reviewValidation.js";
 
 // Public routes
 router.get("/accommodations/:id/reviews", getAccommodationReviews);
