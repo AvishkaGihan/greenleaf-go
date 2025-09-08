@@ -19,11 +19,11 @@ export default function ItineraryCard({
         🌿 Your Eco-Friendly Itinerary
       </Text>
       <Text className="text-gray-600 mb-4">
-        <Text className="font-semibold">{itinerary.destination}</Text> -{" "}
-        {itinerary.dates}
+        <Text className="font-semibold">{itinerary.title}</Text> -{" "}
+        {itinerary.destination_city}, {itinerary.destination_country}
       </Text>
 
-      {itinerary.days.map((day) => (
+      {itinerary.days?.map((day) => (
         <View key={day.day} className="bg-green-50 p-3 rounded-lg mb-3">
           <Text className="font-semibold text-gray-800 mb-2">
             Day {day.day}
@@ -37,8 +37,8 @@ export default function ItineraryCard({
       ))}
 
       <Text className="text-primary font-bold mb-4">
-        Total Carbon Footprint: {itinerary.carbonFootprint} kg CO₂ (65% lower
-        than average)
+        Total Carbon Footprint: {itinerary.estimated_carbon_footprint} kg CO₂
+        (65% lower than average)
       </Text>
 
       <View className="flex-row gap-3">

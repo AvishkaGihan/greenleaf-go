@@ -1,5 +1,6 @@
 import Itinerary from "../models/Itinerary.js";
 import ItineraryItem from "../models/ItineraryItem.js";
+import User from "../models/User.js";
 import UserActivity from "../models/UserActivity.js";
 import { AppError } from "../utils/errorHandler.js";
 import { generateAISuggestions } from "../services/aiService.js";
@@ -130,34 +131,36 @@ export const createItinerary = async (req, res, next) => {
 export const generateItinerary = async (req, res, next) => {
   try {
     const {
-      destination_city,
-      destination_country,
-      start_date,
-      end_date,
-      budget_total,
-      budget_currency,
-      travel_style,
+      destinationCity,
+      destinationCountry,
+      startDate,
+      endDate,
+      budgetTotal,
+      budgetCurrency,
+      travelStyle,
       interests,
-      group_size,
-      accommodation_preference,
-      include_volunteer_activities,
+      groupSize,
+      accommodationPreference,
+      includeVolunteerActivities,
     } = req.body;
 
     // Generate AI suggestions (simplified - would integrate with actual AI service)
     const suggestions = await generateAISuggestions({
-      destination_city,
-      destination_country,
-      start_date,
-      end_date,
-      budget_total,
-      travel_style,
+      destination_city: destinationCity,
+      destination_country: destinationCountry,
+      start_date: startDate,
+      end_date: endDate,
+      budget_total: budgetTotal,
+      travel_style: travelStyle,
       interests,
-      group_size,
-      accommodation_preference,
-      include_volunteer_activities,
+      group_size: groupSize,
+      accommodation_preference: accommodationPreference,
+      include_volunteer_activities: includeVolunteerActivities,
     });
 
-    const generationId = require("crypto").randomUUID();
+    const generationId = `gen_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
     res.json({
       success: true,

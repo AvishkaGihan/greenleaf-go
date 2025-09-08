@@ -45,18 +45,50 @@ export interface Review {
 }
 
 export interface Itinerary {
-  id: string;
-  destination: string;
-  dates: string;
-  budget: string;
-  interests: string;
-  days: ItineraryDay[];
-  carbonFootprint: number;
+  _id?: string;
+  id?: string;
+  title: string;
+  description?: string;
+  destination_city: string;
+  destination_country: string;
+  start_date: string;
+  end_date: string;
+  budget_total: number;
+  budget_currency: string;
+  travel_style: string;
+  interests: string[];
+  eco_score: number;
+  estimated_carbon_footprint: number;
+  is_ai_generated?: boolean;
+  is_favorite?: boolean;
+  highlights?: string[];
+  days?: ItineraryDay[];
+  total_cost?: number;
 }
 
 export interface ItineraryDay {
   day: number;
   activities: string[];
+}
+
+export interface GeneratedSuggestion {
+  title: string;
+  destination_city: string;
+  destination_country: string;
+  eco_score: number;
+  estimated_carbon_footprint: number;
+  total_cost: number;
+  highlights: string[];
+  detailed_itinerary?: {
+    day: number;
+    activities: string[];
+  }[];
+}
+
+export interface GenerateItineraryResponse {
+  suggestions: GeneratedSuggestion[];
+  generation_id: string;
+  expires_at: string;
 }
 
 export interface ConservationEvent {
