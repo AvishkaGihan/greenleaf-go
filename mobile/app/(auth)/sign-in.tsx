@@ -7,23 +7,35 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "@/api/client";
 
 export default function SignInScreen() {
-  const [email, setEmail] = useState("demo@greenleafgo.com");
-  const [password, setPassword] = useState("••••••••");
+  const [email, setEmail] = useState("john.doe@example.com");
+  const [password, setPassword] = useState("password123");
   const [loading, setLoading] = useState(false);
 
   const handleSignIn = async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const { data } = await api.post("/auth/login", { email, password });
+      await AsyncStorage.setItem("accessToken", data.data.accessToken);
+      await AsyncStorage.setItem("refreshToken", data.data.refreshToken);
+      router.replace("/(tabs)/discover");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      Alert.alert(
+        "Login failed",
+        error.response?.data?.error?.message || "Something went wrong"
+      );
+    } finally {
       setLoading(false);
-      router.replace("/(tabs)/discover" as any);
-    }, 1500);
+    }
   };
 
   const handleSkipToDemo = () => {
