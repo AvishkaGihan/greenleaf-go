@@ -141,3 +141,101 @@ export interface User {
     hoursVolunteered: number;
   };
 }
+
+export interface ProfileData {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  profileImageUrl?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  budgetRange: string;
+  ecoInterests: string[];
+  preferredLanguage: string;
+  currency: string;
+  totalEcoPoints: number;
+  ecoLevel: number;
+  emailVerified: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+export interface UserBadge {
+  id: string;
+  name: string;
+  description: string;
+  emoji: string;
+  category: string;
+  rarity: string;
+  earnedAt: string;
+}
+
+export interface UserActivity {
+  id: string;
+  activityType: string;
+  pointsEarned: number;
+  eventTitle?: string;
+  accommodationName?: string;
+  restaurantName?: string;
+  itineraryTitle?: string;
+  badgeName?: string;
+  badgeEmoji?: string;
+  createdAt: string;
+}
+
+export interface UserItinerary {
+  _id: string;
+  title: string;
+  description?: string;
+  destination_city: string;
+  destination_country: string;
+  start_date: string;
+  end_date: string;
+  budget_total: number;
+  budget_currency: string;
+  travel_style: string;
+  interests: string[];
+  eco_score: number;
+  estimated_carbon_footprint: number;
+  is_ai_generated?: boolean;
+  is_favorite?: boolean;
+  highlights?: string[];
+  total_cost?: number;
+}
+
+export interface UserBadgesResponse {
+  badges: UserBadge[];
+  totalBadges: number;
+  nextBadge: {
+    name: string;
+    progress: number;
+    required: number;
+  };
+}
+
+export interface UserActivitiesResponse {
+  activities: UserActivity[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
+  summary: {
+    totalPoints: number;
+    currentLevel: number;
+    pointsToNextLevel: number;
+    activitiesThisMonth: number;
+  };
+}
+
+export interface UserItinerariesResponse {
+  itineraries: UserItinerary[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
+}
