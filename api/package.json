@@ -12,6 +12,7 @@
     "lint": "eslint **/*.js",
     "lint:fix": "eslint **/*.js --fix",
     "seed": "node scripts/seedData.js",
+    "seed:reset": "node scripts/seedData.js --reset",
     "migrate": "node scripts/migrateDatabase.js",
     "docker:build": "docker build -t greenleaf-go .",
     "docker:run": "docker run -p 5000:5000 greenleaf-go"
