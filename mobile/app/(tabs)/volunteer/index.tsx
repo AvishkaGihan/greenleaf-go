@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  Image,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { ConservationEvent } from "@/types";
 import api from "@/api/client";
+import FloatingActionButton from "@/components/FloatingActionButton";
 
 export default function VolunteerScreen() {
   const [activeTab, setActiveTab] = useState<"all" | "my">("all");
@@ -64,16 +73,18 @@ export default function VolunteerScreen() {
 
   const getEventTypeColor = (eventType: ConservationEvent["eventType"]) => {
     switch (eventType) {
-      case "cleanup":
+      case "beach-cleanup":
         return { bg: "bg-orange-100", text: "text-orange-700" };
-      case "restoration":
-        return { bg: "bg-blue-100", text: "text-blue-700" };
-      case "planting":
+      case "tree-planting":
         return { bg: "bg-green-100", text: "text-green-700" };
+      case "wildlife-monitoring":
+        return { bg: "bg-blue-100", text: "text-blue-700" };
       case "education":
         return { bg: "bg-purple-100", text: "text-purple-700" };
-      case "monitoring":
+      case "research":
         return { bg: "bg-indigo-100", text: "text-indigo-700" };
+      case "restoration":
+        return { bg: "bg-teal-100", text: "text-teal-700" };
       default:
         return { bg: "bg-gray-100", text: "text-gray-700" };
     }
@@ -87,7 +98,7 @@ export default function VolunteerScreen() {
         return "text-green-600";
       case "moderate":
         return "text-yellow-600";
-      case "hard":
+      case "challenging":
         return "text-red-600";
     }
   };
@@ -121,77 +132,105 @@ export default function VolunteerScreen() {
     if (activeTab === "my" && item.userRsvpStatus !== "registered") return null;
 
     return (
-      <View
-        className={`bg-white rounded-xl p-4 mb-3 shadow-sm border-l-4 ${
-          item.userRsvpStatus === "registered"
-            ? "border-green-500"
-            : "border-orange-400"
-        }`}
-      >
-        <View className="flex-row justify-between items-start mb-3">
-          <Text className="text-lg font-semibold text-gray-800 flex-1 mr-2">
-            {item.title}
-          </Text>
-          <View className={`px-3 py-1 rounded-full ${typeColor.bg}`}>
-            <Text className={`text-sm font-medium ${typeColor.text}`}>
-              {item.eventType}
+      <View className="bg-white rounded-2xl p-5 mb-4 border border-gray-50">
+        <View className="flex-row">
+          <View className="w-20 h-20 bg-gray-100 rounded-xl mr-4 overflow-hidden">
+            {item.imageUrls && item.imageUrls.length > 0 ? (
+              <Image
+                source={{ uri: item.imageUrls[0] }}
+                className="w-full h-full"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="w-full h-full items-center justify-center bg-green-50">
+                <Ionicons name="leaf-outline" size={32} color="#27ae60" />
+              </View>
+            )}
+          </View>
+          <View className="flex-1">
+            <View className="flex-row items-start justify-between mb-2">
+              <Text
+                className="text-lg font-bold text-gray-900 flex-1 leading-tight mr-2"
+                numberOfLines={2}
+              >
+                {item.title}
+              </Text>
+              <View className={`px-3 py-1 rounded-full ${typeColor.bg}`}>
+                <Text className={`text-sm font-medium ${typeColor.text}`}>
+                  {item.eventType
+                    .replace("-", " ")
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                </Text>
+              </View>
+            </View>
+
+            <View className="flex-row items-center mb-2">
+              <Ionicons name="calendar-outline" size={14} color="#888" />
+              <Text className="text-gray-600 text-sm ml-1">
+                {date} · {time}
+              </Text>
+            </View>
+
+            <View className="flex-row items-center mb-2">
+              <Ionicons name="location-outline" size={14} color="#888" />
+              <Text className="text-gray-600 text-sm ml-1">
+                {item.city}, {item.country}
+              </Text>
+            </View>
+
+            <Text className="text-gray-700 text-sm mb-3" numberOfLines={2}>
+              {item.description}
             </Text>
+
+            <View className="flex-row items-center justify-between mb-3">
+              <View className="flex-row items-center">
+                <View className="bg-primary/10 px-2 py-1 rounded-full mr-2">
+                  <Text
+                    className={`${getDifficultyColor(
+                      item.difficultyLevel
+                    )} font-bold text-xs`}
+                  >
+                    {item.difficultyLevel.charAt(0).toUpperCase() +
+                      item.difficultyLevel.slice(1)}
+                  </Text>
+                </View>
+                <View className="flex-row items-center">
+                  <Ionicons name="people-outline" size={12} color="#666" />
+                  <Text className="text-gray-600 text-xs ml-1">
+                    {item.maxParticipants} max
+                  </Text>
+                </View>
+              </View>
+              <View className="flex-row items-center bg-green-50 px-2 py-1 rounded-full">
+                <Ionicons name="leaf-outline" size={12} color="#27ae60" />
+                <Text className="text-green-700 text-xs font-medium ml-1">
+                  {item.ecoPointsReward} pts
+                </Text>
+              </View>
+            </View>
+
+            {item.userRsvpStatus === "registered" ? (
+              <TouchableOpacity
+                className="bg-red-500 rounded-full py-3 items-center"
+                onPress={() => handleCancelRSVP(item._id)}
+              >
+                <Text className="text-white font-semibold">Cancel RSVP</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                className="bg-green-600 rounded-full py-3 items-center"
+                onPress={() => handleRSVP(item._id)}
+                disabled={item.availableSpots <= 0}
+              >
+                <Text className="text-white font-semibold">
+                  {item.availableSpots <= 0
+                    ? "Event Full"
+                    : `RSVP (${item.availableSpots} spots left)`}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
-
-        <View className="mb-3">
-          <View className="flex-row items-center mb-1">
-            <Ionicons name="calendar-outline" size={16} color="#666" />
-            <Text className="text-gray-600 ml-2">
-              {date} · {time}
-            </Text>
-          </View>
-          <View className="flex-row items-center mb-1">
-            <Ionicons name="location-outline" size={16} color="#666" />
-            <Text className="text-gray-600 ml-2">
-              {item.city}, {item.country}
-            </Text>
-          </View>
-        </View>
-
-        <Text className="text-gray-700 mb-3">{item.description}</Text>
-
-        <View className="mb-3">
-          <Text className="text-gray-600">
-            <Text className="font-semibold">Difficulty:</Text>{" "}
-            <Text className={getDifficultyColor(item.difficultyLevel)}>
-              {item.difficultyLevel.charAt(0).toUpperCase() +
-                item.difficultyLevel.slice(1)}
-            </Text>{" "}
-            • <Text className="font-semibold">Max Participants:</Text>{" "}
-            {item.maxParticipants}
-          </Text>
-          <Text className="text-gray-600">
-            <Text className="font-semibold">Eco Points:</Text>{" "}
-            {item.ecoPointsReward}
-          </Text>
-        </View>
-
-        {item.userRsvpStatus === "registered" ? (
-          <TouchableOpacity
-            className="bg-red-500 rounded-full py-3 items-center"
-            onPress={() => handleCancelRSVP(item._id)}
-          >
-            <Text className="text-white font-semibold">Cancel RSVP</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            className="bg-primary rounded-full py-3 items-center"
-            onPress={() => handleRSVP(item._id)}
-            disabled={item.availableSpots <= 0}
-          >
-            <Text className="text-white font-semibold">
-              {item.availableSpots <= 0
-                ? "Event Full"
-                : `RSVP (${item.availableSpots} spots left)`}
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
     );
   };
@@ -202,31 +241,39 @@ export default function VolunteerScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
+      {/* Header */}
+      <View className="px-5 pt-4 pb-2">
+        <Text className="text-2xl font-bold text-gray-900 mb-1">Volunteer</Text>
+        <Text className="text-gray-600 text-base">
+          Join conservation events and make a difference
+        </Text>
+      </View>
+
       <View className="px-4 py-4">
-        <View className="flex-row mb-4">
+        <View className="flex-row mb-4 bg-gray-100 rounded-xl p-1">
           <TouchableOpacity
-            className={`flex-1 py-3 items-center rounded-l-lg ${
-              activeTab === "all" ? "bg-primary" : "bg-gray-200"
+            className={`flex-1 py-3 items-center rounded-lg ${
+              activeTab === "all" ? "bg-white" : "bg-transparent"
             }`}
             onPress={() => setActiveTab("all")}
           >
             <Text
               className={`font-semibold ${
-                activeTab === "all" ? "text-white" : "text-gray-600"
+                activeTab === "all" ? "text-green-600" : "text-gray-600"
               }`}
             >
               All Events
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            className={`flex-1 py-3 items-center rounded-r-lg ${
-              activeTab === "my" ? "bg-primary" : "bg-gray-200"
+            className={`flex-1 py-3 items-center rounded-lg ${
+              activeTab === "my" ? "bg-white" : "bg-transparent"
             }`}
             onPress={() => setActiveTab("my")}
           >
             <Text
               className={`font-semibold ${
-                activeTab === "my" ? "text-white" : "text-gray-600"
+                activeTab === "my" ? "text-green-600" : "text-gray-600"
               }`}
             >
               My Events ({myEventsCount})
@@ -236,7 +283,12 @@ export default function VolunteerScreen() {
 
         {loading && events.length === 0 ? (
           <View className="flex-1 justify-center items-center">
-            <Text className="text-gray-600">Loading events...</Text>
+            <View className="bg-white rounded-full p-6">
+              <ActivityIndicator size="large" color="#27ae60" />
+            </View>
+            <Text className="text-gray-600 mt-4 font-medium">
+              Finding amazing events...
+            </Text>
           </View>
         ) : (
           <FlatList
@@ -246,18 +298,32 @@ export default function VolunteerScreen() {
             showsVerticalScrollIndicator={false}
             refreshing={loading}
             onRefresh={fetchEvents}
+            contentContainerStyle={{ paddingBottom: 100 }}
             ListEmptyComponent={
               <View className="flex-1 justify-center items-center py-8">
-                <Text className="text-gray-600">
+                <View className="bg-gray-50 rounded-full p-8 mb-4">
+                  <Ionicons name="leaf-outline" size={64} color="#ccc" />
+                </View>
+                <Text className="text-gray-700 text-xl font-bold mb-2 text-center">
+                  No events found
+                </Text>
+                <Text className="text-gray-500 text-center leading-relaxed">
                   {activeTab === "my"
-                    ? "No registered events"
-                    : "No events available"}
+                    ? "You haven't registered for any events yet. Browse all events to find opportunities to volunteer!"
+                    : "No events are currently available. Check back later for new conservation opportunities!"}
                 </Text>
               </View>
             }
           />
         )}
       </View>
+
+      <FloatingActionButton
+        icon="filter"
+        onPress={() =>
+          alert("Filter options: Event Type, Location, Date, Difficulty")
+        }
+      />
     </SafeAreaView>
   );
 }

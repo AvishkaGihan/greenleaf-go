@@ -95,11 +95,12 @@ export interface ConservationEvent {
   _id: string;
   title: string;
   eventType:
-    | "cleanup"
-    | "restoration"
-    | "planting"
+    | "beach-cleanup"
+    | "tree-planting"
+    | "wildlife-monitoring"
     | "education"
-    | "monitoring";
+    | "research"
+    | "restoration";
   startDate: string;
   endDate: string;
   location: {
@@ -111,7 +112,7 @@ export interface ConservationEvent {
   description: string;
   maxParticipants: number;
   ecoPointsReward: number;
-  difficultyLevel: "easy" | "moderate" | "hard";
+  difficultyLevel: "easy" | "moderate" | "challenging";
   organizer?: string;
   createdBy: string;
   isActive: boolean;
@@ -119,6 +120,7 @@ export interface ConservationEvent {
   availableSpots: number;
   userRsvpStatus?: "registered" | "cancelled" | null;
   distance?: number;
+  imageUrls?: string[];
 }
 
 export interface Badge {
