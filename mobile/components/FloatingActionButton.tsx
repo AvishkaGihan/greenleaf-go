@@ -17,7 +17,7 @@ export default function FloatingActionButton({
 
   return (
     <TouchableOpacity
-      className="absolute bottom-24 right-6 w-14 h-14 bg-accent rounded-full items-center justify-center shadow-lg"
+      className="absolute bottom-24 right-6 w-14 h-14 bg-accent rounded-full items-center justify-center"
       onPress={onPress}
       style={{ elevation: 8 }}
     >

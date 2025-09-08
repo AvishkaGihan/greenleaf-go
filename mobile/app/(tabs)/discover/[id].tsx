@@ -147,7 +147,7 @@ export default function EcoPlaceDetailScreen() {
 
         {/* Content */}
         <View className="px-4 py-4 -mt-4">
-          <View className="bg-white rounded-xl p-4 shadow-sm mb-4">
+          <View className="bg-white rounded-xl p-4 mb-4">
             <Text className="text-2xl font-bold text-gray-800 mb-2">
               {place.name}
             </Text>
@@ -188,7 +188,7 @@ export default function EcoPlaceDetailScreen() {
           </View>
 
           {/* About Section */}
-          <View className="bg-white rounded-xl p-4 shadow-sm mb-4">
+          <View className="bg-white rounded-xl p-4 mb-4">
             <Text className="text-lg font-semibold text-gray-800 mb-3">
               About
             </Text>
@@ -196,7 +196,7 @@ export default function EcoPlaceDetailScreen() {
           </View>
 
           {/* Sustainability Breakdown */}
-          <View className="bg-white rounded-xl p-4 shadow-sm mb-4">
+          <View className="bg-white rounded-xl p-4 mb-4">
             <Text className="text-lg font-semibold text-gray-800 mb-3">
               Sustainability Breakdown
             </Text>
@@ -208,7 +208,7 @@ export default function EcoPlaceDetailScreen() {
           </View>
 
           {/* Reviews */}
-          <View className="bg-white rounded-xl p-4 shadow-sm mb-4">
+          <View className="bg-white rounded-xl p-4 mb-4">
             <Text className="text-lg font-semibold text-gray-800 mb-3">
               Reviews
             </Text>

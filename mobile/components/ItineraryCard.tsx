@@ -14,7 +14,7 @@ export default function ItineraryCard({
   onRegenerate,
 }: ItineraryCardProps) {
   return (
-    <View className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-primary">
+    <View className="bg-white rounded-xl p-4 border-l-4 border-primary">
       <Text className="text-lg font-semibold text-gray-800 mb-2">
         🌿 Your Eco-Friendly Itinerary
       </Text>

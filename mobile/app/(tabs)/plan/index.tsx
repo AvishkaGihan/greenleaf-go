@@ -93,19 +93,20 @@ export default function PlanScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
+      {/* Header */}
+      <View className="px-5 pt-4 pb-2">
+        <Text className="text-2xl font-bold text-gray-900 mb-1">Plan</Text>
+        <Text className="text-gray-600 text-base">
+          Create your eco-friendly itinerary
+        </Text>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
         <ScrollView className="flex-1 px-4 py-4">
-          <View className="bg-white rounded-xl p-6 shadow-sm mb-4 border border-gray-100">
-            <View className="flex-row items-center mb-4">
-              <Ionicons name="leaf-outline" size={28} color="#059669" />
-              <Text className="text-2xl font-bold text-gray-800 ml-2">
-                Plan Your Eco Trip
-              </Text>
-            </View>
-
+          <View className="bg-white rounded-xl p-6 mb-4 border border-gray-50">
             <View className="mb-4">
               <Text className="text-gray-700 mb-2 font-medium">
                 Destination
@@ -218,7 +219,7 @@ export default function PlanScreen() {
             </View>
 
             <TouchableOpacity
-              className="bg-green-600 rounded-full py-5 items-center border-2 border-green-700 mt-2"
+              className="bg-green-600 rounded-full py-3 items-center mt-2"
               onPress={handleGenerateItinerary}
               disabled={loading}
             >
@@ -247,7 +248,7 @@ export default function PlanScreen() {
           </View>
 
           {showItinerary && suggestions.length > 0 && (
-            <View className="bg-white rounded-xl p-6 shadow-sm mb-4 border border-gray-100">
+            <View className="bg-white rounded-xl p-6 mb-4 border border-gray-50">
               <View className="flex-row items-center mb-4">
                 <Ionicons name="map-outline" size={24} color="#059669" />
                 <Text className="text-xl font-bold text-gray-800 ml-2">
@@ -348,7 +349,7 @@ export default function PlanScreen() {
 
               <View className="flex-row gap-3 mt-4">
                 <TouchableOpacity
-                  className="flex-1 bg-green-600 rounded-full py-4 items-center border-2 border-green-700"
+                  className="flex-1 bg-green-600 rounded-full py-3 items-center"
                   onPress={handleSaveItinerary}
                 >
                   <View className="flex-row items-center">
@@ -366,7 +367,7 @@ export default function PlanScreen() {
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  className="flex-1 bg-gray-200 rounded-full py-4 items-center border-2 border-gray-300"
+                  className="flex-1 bg-gray-200 rounded-full py-3 items-center"
                   onPress={handleRegenerateItinerary}
                 >
                   <View className="flex-row items-center">
@@ -388,7 +389,7 @@ export default function PlanScreen() {
           )}
 
           {savedConfirmation && (
-            <View className="bg-green-100 border border-green-400 rounded-xl p-4 mb-4 shadow-sm">
+            <View className="bg-green-100 border border-green-400 rounded-xl p-4 mb-4">
               <View className="flex-row items-center justify-center">
                 <Ionicons
                   name="checkmark-circle-outline"

@@ -7,11 +7,13 @@ import {
   FlatList,
   Image,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
 import api from "@/api/client";
 import { ProfileData, UserBadge, UserActivity, UserItinerary } from "@/types";
 import FloatingActionButton from "@/components/FloatingActionButton";
@@ -68,6 +70,51 @@ export default function ProfileScreen() {
     } catch (error) {
       console.error("Logout error:", error);
       router.replace("/(auth)/sign-in");
+    }
+  };
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission needed",
+        "Camera roll permissions are required to select an image."
+      );
+      return;
+    }
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      handleAvatarUpload(result.assets[0].uri);
+    }
+  };
+
+  const handleAvatarUpload = async (imageUri: string) => {
+    const formData = new FormData();
+    formData.append("avatar", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "avatar.jpg",
+    } as any);
+
+    try {
+      const { data } = await api.post(
+        "/users/profile/upload-avatar",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      setProfile((prev) =>
+        prev ? { ...prev, profileImageUrl: data.data.profileImageUrl } : null
+      );
+    } catch (error) {
+      console.error("Upload error:", error);
+      Alert.alert("Upload failed", "Could not upload avatar");
     }
   };
 
@@ -137,7 +184,7 @@ export default function ProfileScreen() {
         </View>
 
         <View className="flex-1 justify-center items-center">
-          <View className="bg-white rounded-full p-6 shadow-lg">
+          <View className="bg-white rounded-full p-6">
             <ActivityIndicator size="large" color="#27ae60" />
           </View>
           <Text className="text-gray-600 mt-4 font-medium">
@@ -170,7 +217,7 @@ export default function ProfileScreen() {
             We couldn&apos;t load your profile information. Please try again.
           </Text>
           <TouchableOpacity
-            className="bg-green-600 rounded-full py-4 px-8 items-center border-2 border-green-700"
+            className="bg-green-600 rounded-full py-3 px-8 items-center"
             onPress={fetchProfileData}
           >
             <View className="flex-row items-center">
@@ -194,22 +241,26 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView
-        className="flex-1 px-5"
+        className="flex-1 px-4"
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {/* Profile Header */}
-        <View className="bg-white rounded-2xl p-6 mb-6 shadow-lg border border-gray-50">
+        <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-50">
           <View className="items-center mb-4">
             {profile.profileImageUrl ? (
-              <Image
-                source={{ uri: profile.profileImageUrl }}
-                className="w-20 h-20 rounded-full mb-3"
-                resizeMode="cover"
-              />
+              <TouchableOpacity onPress={pickImage}>
+                <Image
+                  source={{ uri: profile.profileImageUrl }}
+                  className="w-20 h-20 rounded-full mb-3"
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
             ) : (
-              <View className="w-20 h-20 bg-green-100 rounded-full items-center justify-center mb-3">
-                <Ionicons name="person" size={32} color="#27ae60" />
-              </View>
+              <TouchableOpacity onPress={pickImage}>
+                <View className="w-20 h-20 bg-green-100 rounded-full items-center justify-center mb-3">
+                  <Ionicons name="person" size={32} color="#27ae60" />
+                </View>
+              </TouchableOpacity>
             )}
             <Text className="text-xl font-bold text-gray-900 mb-1">
               {profile.firstName} {profile.lastName}
@@ -245,7 +296,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Profile Info */}
-        <View className="bg-white rounded-2xl p-5 mb-6 shadow-lg border border-gray-50">
+        <View className="bg-white rounded-2xl p-5 mb-6 border border-gray-50">
           <View className="flex-row items-center mb-4">
             <Ionicons name="person-outline" size={24} color="#27ae60" />
             <Text className="text-lg font-bold text-gray-900 ml-2">
@@ -299,7 +350,7 @@ export default function ProfileScreen() {
           </View>
 
           <View className="flex-row gap-3">
-            <TouchableOpacity className="flex-1 bg-green-600 rounded-full py-3 items-center border-2 border-green-700">
+            <TouchableOpacity className="flex-1 bg-green-600 rounded-full py-3 items-center">
               <View className="flex-row items-center">
                 <Ionicons name="create-outline" size={16} color="#FFFFFF" />
                 <Text className="text-white font-semibold ml-2">
@@ -308,7 +359,7 @@ export default function ProfileScreen() {
               </View>
             </TouchableOpacity>
             <TouchableOpacity
-              className="flex-1 bg-red-500 rounded-full py-3 items-center border-2 border-red-600"
+              className="flex-1 bg-red-500 rounded-full py-3 items-center"
               onPress={logout}
             >
               <View className="flex-row items-center">
@@ -320,7 +371,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Saved Itineraries */}
-        <View className="bg-white rounded-2xl p-5 mb-6 shadow-lg border border-gray-50">
+        <View className="bg-white rounded-2xl p-5 mb-6 border border-gray-50">
           <View className="flex-row items-center mb-4">
             <Ionicons name="map-outline" size={24} color="#27ae60" />
             <Text className="text-lg font-bold text-gray-900 ml-2">
@@ -351,7 +402,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Eco-Badges */}
-        <View className="bg-white rounded-2xl p-5 mb-6 shadow-lg border border-gray-50">
+        <View className="bg-white rounded-2xl p-5 mb-6 border border-gray-50">
           <View className="flex-row items-center mb-4">
             <Ionicons name="medal-outline" size={24} color="#27ae60" />
             <Text className="text-lg font-bold text-gray-900 ml-2">
@@ -396,7 +447,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Impact Summary */}
-        <View className="bg-white rounded-2xl p-5 shadow-lg border border-gray-50">
+        <View className="bg-white rounded-2xl p-5 border border-gray-50">
           <View className="flex-row items-center mb-4">
             <Ionicons name="stats-chart-outline" size={24} color="#27ae60" />
             <Text className="text-lg font-bold text-gray-900 ml-2">

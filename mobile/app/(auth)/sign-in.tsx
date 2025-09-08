@@ -64,7 +64,7 @@ export default function SignInScreen() {
             </Text>
           </View>
 
-          <View className="bg-white rounded-xl p-6 mb-6 border border-gray-100">
+          <View className="bg-white rounded-xl p-6 mb-6 border border-gray-50">
             <Text className="text-xl font-semibold mb-6 text-gray-800">
               Sign In to Continue
             </Text>

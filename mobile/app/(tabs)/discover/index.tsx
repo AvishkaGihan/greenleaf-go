@@ -81,14 +81,7 @@ export default function DiscoverScreen() {
 
     return (
       <TouchableOpacity
-        className="bg-white rounded-2xl p-5 mb-4 shadow-lg border border-gray-50"
-        style={{
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}
+        className="bg-white rounded-2xl p-5 mb-4 border border-gray-50"
         onPress={() => router.push(`/(tabs)/discover/${item._id}` as any)}
         activeOpacity={0.95}
       >
@@ -191,8 +184,8 @@ export default function DiscoverScreen() {
       </View>
 
       {/* Search Bar */}
-      <View className="px-5 mb-4">
-        <View className="bg-white rounded-2xl flex-row items-center px-5 py-4 shadow-sm border border-gray-100">
+      <View className="px-4 mb-4">
+        <View className="bg-white rounded-2xl flex-row items-center px-5 py-4 border border-gray-50">
           <Ionicons name="search" size={22} color="#888" />
           <TextInput
             className="flex-1 ml-3 text-base text-gray-900"
@@ -212,7 +205,7 @@ export default function DiscoverScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="px-5"
+          className="px-4"
           contentContainerStyle={{ paddingRight: 20 }}
         >
           {selectedFilters.map((filter, index) => (
@@ -229,10 +222,10 @@ export default function DiscoverScreen() {
       </View>
 
       {/* Content */}
-      <View className="flex-1 px-5">
+      <View className="flex-1 px-4">
         {loading ? (
           <View className="flex-1 justify-center items-center">
-            <View className="bg-white rounded-full p-6 shadow-lg">
+            <View className="bg-white rounded-full p-6">
               <ActivityIndicator size="large" color="#27ae60" />
             </View>
             <Text className="text-gray-600 mt-4 font-medium">
