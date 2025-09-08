@@ -42,22 +42,50 @@ export default function EcoPlaceDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-background items-center justify-center">
-        <View className="w-28 h-28 bg-primary rounded-full items-center justify-center mb-6">
-          <Ionicons name="leaf" size={44} color="white" />
+      <SafeAreaView className="flex-1 bg-background">
+        <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-gray-100">
+          <View className="flex-row items-center">
+            <BackButton />
+            <View className="ml-3">
+              <View className="h-5 bg-gray-200 rounded w-32 mb-1" />
+              <View className="h-4 bg-gray-200 rounded w-24" />
+            </View>
+          </View>
         </View>
-        <ActivityIndicator size="large" color="#27ae60" />
-        <Text className="text-gray-600 mt-4 font-medium">
-          Loading place details...
-        </Text>
+        <View className="flex-1 items-center justify-center px-5">
+          <View className="w-28 h-28 bg-primary rounded-full items-center justify-center mb-6">
+            <Ionicons name="leaf" size={44} color="white" />
+          </View>
+          <ActivityIndicator size="large" color="#27ae60" />
+          <Text className="text-gray-600 mt-4 font-medium text-center">
+            Loading place details...
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   if (!place) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center">
-        <Text className="text-gray-600">Place not found</Text>
+      <SafeAreaView className="flex-1 bg-background">
+        <View className="flex-row items-center px-5 py-4 bg-white border-b border-gray-100">
+          <BackButton />
+          <Text className="text-lg font-bold text-gray-900 ml-3">
+            Place Details
+          </Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-5">
+          <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
+            <Ionicons name="alert-circle-outline" size={32} color="#666" />
+          </View>
+          <Text className="text-gray-900 text-xl font-bold mb-2 text-center">
+            Place not found
+          </Text>
+          <Text className="text-gray-500 text-center leading-6">
+            The accommodation you&apos;re looking for doesn&apos;t exist or has
+            been removed.
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -105,87 +133,139 @@ export default function EcoPlaceDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header with Back Button */}
-        <View className="flex-row items-center m-4 px-4">
-          <BackButton />
-          <Text className="text-xl font-semibold text-gray-800 ml-3">
-            {place.name}
-          </Text>
-        </View>
-
-        {/* Header Image */}
-        <View className="h-48 bg-gray-200 items-center justify-center">
-          {place.imageUrls && place.imageUrls.length > 0 ? (
-            <Image
-              source={{ uri: place.imageUrls[0] }}
-              className="w-full h-full"
-              resizeMode="cover"
-            />
-          ) : (
-            <View className="w-full h-full items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
-              <Ionicons
-                name={place.type === "hotel" ? "business" : "restaurant"}
-                size={60}
-                color="#27ae60"
-              />
+        <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-gray-100">
+          <View className="flex-row items-center">
+            <BackButton />
+            <View className="ml-3">
+              <Text
+                className="text-lg font-bold text-gray-900"
+                numberOfLines={1}
+              >
+                {place.name}
+              </Text>
+              <Text className="text-sm text-gray-500">
+                {place.city}, {place.country}
+              </Text>
+            </View>
+          </View>
+          {place.isVerified && (
+            <View className="flex-row items-center bg-green-50 px-3 py-1 rounded-full">
+              <Ionicons name="checkmark-circle" size={14} color="#27ae60" />
+              <Text className="text-green-700 text-xs font-medium ml-1">
+                Verified
+              </Text>
             </View>
           )}
         </View>
 
-        {/* Content */}
-        <View className="px-4 py-4 -mt-4">
-          <View className="bg-white rounded-xl p-4 mb-4">
-            <Text className="text-2xl font-bold text-gray-800 mb-2">
-              {place.name}
-            </Text>
-
-            <View className="flex-row items-center mb-2">
-              {renderStars(place.starRating || 0)}
-              <Text className="text-gray-600 ml-2">
-                {place.starRating || 0}/5 Stars
-              </Text>
-            </View>
-
-            <Text className="text-gray-600 mb-2">{place.address}</Text>
-            <Text className="text-primary font-bold text-lg mb-4">
-              {place.priceRange}
-            </Text>
-
-            <View className="flex-row gap-3 mb-4">
-              <TouchableOpacity
-                className="flex-1 bg-primary rounded-full py-3 items-center"
-                onPress={handleAddToItinerary}
-              >
-                <Text className="text-white font-semibold">Add to Trip</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="flex-1 bg-gray-200 rounded-full py-3 items-center"
-                onPress={handleShare}
-              >
-                <Ionicons name="share-outline" size={20} color="#333" />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              className="bg-green-600 rounded-full py-3 items-center"
-              onPress={handleBookNow}
-            >
-              <Text className="text-white font-semibold text-lg">Book Now</Text>
-            </TouchableOpacity>
+        {/* Header Image */}
+        <View className="relative">
+          <View className="h-64 bg-gray-200">
+            {place.imageUrls && place.imageUrls.length > 0 ? (
+              <Image
+                source={{ uri: place.imageUrls[0] }}
+                className="w-full h-full"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="w-full h-full items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
+                <Ionicons
+                  name={place.type === "hotel" ? "business" : "restaurant"}
+                  size={64}
+                  color="#27ae60"
+                />
+              </View>
+            )}
           </View>
 
+          {/* Overlay with key info */}
+          <View className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-5">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Text
+                    key={`eco-star-${place._id}-${i}`}
+                    className="text-base"
+                  >
+                    {i < Math.round(place.ecoRating || 0) ? "🌿" : "🌱"}
+                  </Text>
+                ))}
+                <Text className="text-white ml-2 text-sm font-medium">
+                  {(place.ecoRating || 0).toFixed(1)} Eco Rating
+                </Text>
+              </View>
+              <View className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                <Text className="text-white font-semibold text-sm">
+                  {place.priceRange}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Content */}
+        <View className="px-5 py-6">
+          {/* Main Info Card */}
+          <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-50">
+            <View className="flex-row items-start justify-between mb-4">
+              <View className="flex-1">
+                <Text className="text-2xl font-bold text-gray-900 mb-2">
+                  {place.name}
+                </Text>
+                <View className="flex-row items-center mb-2">
+                  <Ionicons name="location-outline" size={16} color="#666" />
+                  <Text className="text-gray-600 ml-2 text-base">
+                    {place.address}
+                  </Text>
+                </View>
+                <View className="flex-row items-center">
+                  {renderStars(place.starRating || 0)}
+                  <Text className="text-gray-600 ml-2 text-sm">
+                    {place.starRating || 0}/5 Stars
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                className="flex-1 bg-primary rounded-xl py-4 items-center"
+                onPress={handleAddToItinerary}
+              >
+                <Text className="text-white font-semibold text-base">
+                  Add to Trip
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="bg-gray-100 rounded-xl p-4 items-center"
+                onPress={handleShare}
+              >
+                <Ionicons name="share-outline" size={20} color="#666" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Book Now Button */}
+          <TouchableOpacity
+            className="bg-secondary rounded-xl py-4 items-center mb-6"
+            onPress={handleBookNow}
+          >
+            <Text className="text-white font-semibold text-lg">Book Now</Text>
+          </TouchableOpacity>
+
           {/* About Section */}
-          <View className="bg-white rounded-xl p-4 mb-4">
-            <Text className="text-lg font-semibold text-gray-800 mb-3">
-              About
+          <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-50">
+            <Text className="text-xl font-bold text-gray-900 mb-4">About</Text>
+            <Text className="text-gray-700 leading-6 text-base">
+              {place.description}
             </Text>
-            <Text className="text-gray-700 leading-5">{place.description}</Text>
           </View>
 
           {/* Sustainability Breakdown */}
-          <View className="bg-white rounded-xl p-4 mb-4">
-            <Text className="text-lg font-semibold text-gray-800 mb-3">
+          <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-50">
+            <Text className="text-xl font-bold text-gray-900 mb-4">
               Sustainability Breakdown
             </Text>
             <EcoRating
@@ -199,17 +279,19 @@ export default function EcoPlaceDetailScreen() {
 
           {/* Amenities */}
           {place.amenities && place.amenities.length > 0 && (
-            <View className="bg-white rounded-xl p-4 mb-4">
-              <Text className="text-lg font-semibold text-gray-800 mb-3">
+            <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-50">
+              <Text className="text-xl font-bold text-gray-900 mb-4">
                 Amenities
               </Text>
-              <View className="flex-row flex-wrap">
+              <View className="flex-row flex-wrap gap-2">
                 {place.amenities.map((amenity, index) => (
                   <View
                     key={index}
-                    className="bg-green-50 border border-green-200 px-3 py-1 rounded-full mr-2 mb-2"
+                    className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-full"
                   >
-                    <Text className="text-green-700 text-sm">{amenity}</Text>
+                    <Text className="text-primary font-medium text-sm">
+                      {amenity}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -218,28 +300,108 @@ export default function EcoPlaceDetailScreen() {
 
           {/* Certifications */}
           {place.certifications && place.certifications.length > 0 && (
-            <View className="bg-white rounded-xl p-4 mb-4">
-              <Text className="text-lg font-semibold text-gray-800 mb-3">
+            <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-50">
+              <Text className="text-xl font-bold text-gray-900 mb-4">
                 Certifications
               </Text>
-              <View className="flex-row flex-wrap">
+              <View className="flex-row flex-wrap gap-2">
                 {place.certifications.map((cert, index) => (
                   <View
                     key={index}
-                    className="bg-blue-50 border border-blue-200 px-3 py-1 rounded-full mr-2 mb-2"
+                    className="bg-accent/10 border border-accent/20 px-4 py-2 rounded-full"
                   >
-                    <Text className="text-blue-700 text-sm">{cert}</Text>
+                    <Text className="text-accent font-medium text-sm">
+                      {cert}
+                    </Text>
                   </View>
                 ))}
               </View>
             </View>
           )}
 
-          {savedConfirmation && (
-            <View className="bg-green-100 border border-green-400 rounded-xl p-4 mb-4">
-              <Text className="text-green-800 font-semibold text-center">
-                ✅ {place.name} added to your itinerary!
+          {/* Contact Information */}
+          {(place.phone || place.email || place.websiteUrl) && (
+            <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-50">
+              <Text className="text-xl font-bold text-gray-900 mb-4">
+                Contact Information
               </Text>
+              <View className="space-y-3">
+                {place.phone && (
+                  <View className="flex-row items-center">
+                    <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center mr-3">
+                      <Ionicons name="call-outline" size={20} color="#27ae60" />
+                    </View>
+                    <Text className="text-gray-700 text-base">
+                      {place.phone}
+                    </Text>
+                  </View>
+                )}
+                {place.email && (
+                  <View className="flex-row items-center">
+                    <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center mr-3">
+                      <Ionicons name="mail-outline" size={20} color="#27ae60" />
+                    </View>
+                    <Text className="text-gray-700 text-base">
+                      {place.email}
+                    </Text>
+                  </View>
+                )}
+                {place.websiteUrl && (
+                  <View className="flex-row items-center">
+                    <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center mr-3">
+                      <Ionicons
+                        name="globe-outline"
+                        size={20}
+                        color="#27ae60"
+                      />
+                    </View>
+                    <Text className="text-primary text-base underline">
+                      {place.websiteUrl}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Reviews Summary */}
+          {place.reviewsSummary && (
+            <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-50">
+              <Text className="text-xl font-bold text-gray-900 mb-4">
+                Reviews Summary
+              </Text>
+              <View className="flex-row items-center justify-between mb-4">
+                <View className="flex-row items-center">
+                  <Text className="text-gray-700 mr-3">Average Rating:</Text>
+                  <View className="flex-row">
+                    {renderStars(
+                      Math.round(place.reviewsSummary.averageRating)
+                    )}
+                  </View>
+                  <Text className="text-gray-900 font-semibold ml-2">
+                    {place.reviewsSummary.averageRating.toFixed(1)}
+                  </Text>
+                </View>
+                <Text className="text-gray-500 text-sm">
+                  ({place.reviewsSummary.totalReviews} reviews)
+                </Text>
+              </View>
+              <Text className="text-gray-700">
+                Average Eco Rating:{" "}
+                {place.reviewsSummary.averageEcoRating.toFixed(1)}/5
+              </Text>
+            </View>
+          )}
+
+          {/* Success Message */}
+          {savedConfirmation && (
+            <View className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-6">
+              <View className="flex-row items-center">
+                <Ionicons name="checkmark-circle" size={24} color="#27ae60" />
+                <Text className="text-green-800 font-semibold ml-3">
+                  {place.name} added to your itinerary!
+                </Text>
+              </View>
             </View>
           )}
         </View>
