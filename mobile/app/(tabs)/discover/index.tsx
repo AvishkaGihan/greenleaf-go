@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -80,42 +81,98 @@ export default function DiscoverScreen() {
 
     return (
       <TouchableOpacity
-        className="bg-white rounded-xl p-4 mb-3 shadow-sm"
+        className="bg-white rounded-2xl p-5 mb-4 shadow-lg border border-gray-50"
+        style={{
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 3,
+        }}
         onPress={() => router.push(`/(tabs)/discover/${item._id}` as any)}
+        activeOpacity={0.95}
       >
         <View className="flex-row">
-          <View className="w-20 h-20 bg-gray-200 rounded-lg items-center justify-center mr-4">
-            <Ionicons name={getTypeIcon(item.type)} size={30} color="#888" />
+          <View className="w-24 h-24 bg-gray-100 rounded-xl mr-4 overflow-hidden">
+            {item.imageUrls && item.imageUrls.length > 0 ? (
+              <Image
+                source={{ uri: item.imageUrls[0] }}
+                className="w-full h-full"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="w-full h-full items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
+                <Ionicons
+                  name={getTypeIcon(item.type)}
+                  size={32}
+                  color="#27ae60"
+                />
+              </View>
+            )}
           </View>
           <View className="flex-1">
-            <Text className="text-lg font-semibold text-gray-800">
-              {item.name || "Unnamed Accommodation"}
-            </Text>
-            <View className="flex-row items-center my-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Text key={`eco-star-${item._id}-${i}`} className="text-lg">
-                  {i < Math.round(ecoRating) ? "🌿" : "🌱"}
-                </Text>
-              ))}
-              <Text className="text-gray-600 ml-2">
-                {ecoRating.toFixed(1)}/5 Eco Rating
-              </Text>
-            </View>
-            <Text className="text-gray-600 text-sm">
-              {item.city && item.country
-                ? `${item.city}, ${item.country}`
-                : "Location not available"}
-            </Text>
-            <View className="flex-row items-center justify-between mt-1">
-              <Text className="text-primary font-semibold">
-                {formatPriceRange(item.priceRange || "$$")}
+            <View className="flex-row items-start justify-between mb-2">
+              <Text
+                className="text-lg font-bold text-gray-900 flex-1 leading-tight"
+                numberOfLines={2}
+              >
+                {item.name || "Unnamed Accommodation"}
               </Text>
               {item.isVerified && (
-                <View className="flex-row items-center">
-                  <Ionicons name="checkmark-circle" size={16} color="#27ae60" />
-                  <Text className="text-green-600 text-xs ml-1">Verified</Text>
+                <View className="flex-row items-center ml-3 bg-green-50 px-2 py-1 rounded-full">
+                  <Ionicons name="checkmark-circle" size={14} color="#27ae60" />
+                  <Text className="text-green-700 text-xs font-medium ml-1">
+                    Verified
+                  </Text>
                 </View>
               )}
+            </View>
+
+            <View className="flex-row items-center mb-2">
+              <View className="flex-row items-center">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Text key={`eco-star-${item._id}-${i}`} className="text-base">
+                    {i < Math.round(ecoRating) ? "🌿" : "🌱"}
+                  </Text>
+                ))}
+              </View>
+              <Text className="text-gray-600 ml-2 text-sm font-medium">
+                {ecoRating.toFixed(1)}
+              </Text>
+              <View className="w-1 h-1 bg-gray-300 rounded-full mx-2" />
+              <Text className="text-gray-500 text-sm">Eco Rating</Text>
+            </View>
+
+            <View className="flex-row items-center mb-3">
+              <Ionicons name="location-outline" size={14} color="#888" />
+              <Text
+                className="text-gray-600 text-sm ml-1 flex-1"
+                numberOfLines={1}
+              >
+                {item.city && item.country
+                  ? `${item.city}, ${item.country}`
+                  : "Location not available"}
+              </Text>
+            </View>
+
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <View className="bg-primary/10 px-3 py-1 rounded-full">
+                  <Text className="text-primary font-bold text-sm">
+                    {formatPriceRange(item.priceRange || "$$")}
+                  </Text>
+                </View>
+              </View>
+              <View className="flex-row items-center bg-gray-50 px-3 py-1 rounded-full">
+                <Ionicons
+                  name={getTypeIcon(item.type)}
+                  size={12}
+                  color="#666"
+                />
+                <Text className="text-gray-600 text-xs font-medium ml-1 capitalize">
+                  {item.type.replace("-", " ")}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -125,48 +182,74 @@ export default function DiscoverScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="px-4 py-4">
-        <View className="bg-white rounded-full flex-row items-center px-4 py-3 mb-4 shadow-sm">
-          <Ionicons name="search" size={20} color="#888" />
+      {/* Header */}
+      <View className="px-5 pt-4 pb-2">
+        <Text className="text-2xl font-bold text-gray-900 mb-1">Discover</Text>
+        <Text className="text-gray-600 text-base">
+          Find eco-friendly places to stay
+        </Text>
+      </View>
+
+      {/* Search Bar */}
+      <View className="px-5 mb-4">
+        <View className="bg-white rounded-2xl flex-row items-center px-5 py-4 shadow-sm border border-gray-100">
+          <Ionicons name="search" size={22} color="#888" />
           <TextInput
-            className="flex-1 ml-3 text-base"
-            placeholder="Search accommodations or restaurants..."
+            className="flex-1 ml-3 text-base text-gray-900"
+            placeholder="Search accommodations..."
+            placeholderTextColor="#999"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          <Ionicons name="filter" size={20} color="#27ae60" />
+          <TouchableOpacity className="ml-2">
+            <Ionicons name="options" size={22} color="#27ae60" />
+          </TouchableOpacity>
         </View>
+      </View>
 
+      {/* Filter Tags */}
+      <View className="mb-5">
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="mb-4"
+          className="px-5"
+          contentContainerStyle={{ paddingRight: 20 }}
         >
-          {selectedFilters.map((filter) => (
+          {selectedFilters.map((filter, index) => (
             <View
               key={filter}
-              className="bg-green-100 px-4 py-2 rounded-full mr-2"
+              className="bg-green-50 border border-green-200 px-4 py-2 rounded-full mr-3"
             >
-              <Text className="text-green-700 font-medium">{filter}</Text>
+              <Text className="text-green-700 font-semibold text-sm">
+                {filter}
+              </Text>
             </View>
           ))}
         </ScrollView>
+      </View>
 
+      {/* Content */}
+      <View className="flex-1 px-5">
         {loading ? (
           <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color="#27ae60" />
-            <Text className="text-gray-600 mt-2">
-              Loading accommodations...
+            <View className="bg-white rounded-full p-6 shadow-lg">
+              <ActivityIndicator size="large" color="#27ae60" />
+            </View>
+            <Text className="text-gray-600 mt-4 font-medium">
+              Finding amazing places...
             </Text>
           </View>
         ) : ecoPlaces.length === 0 ? (
-          <View className="flex-1 justify-center items-center">
-            <Ionicons name="leaf" size={48} color="#ccc" />
-            <Text className="text-gray-500 mt-4 text-center">
-              No accommodations found
+          <View className="flex-1 justify-center items-center px-8">
+            <View className="bg-gray-50 rounded-full p-8 mb-4">
+              <Ionicons name="leaf-outline" size={64} color="#ccc" />
+            </View>
+            <Text className="text-gray-700 text-xl font-bold mb-2 text-center">
+              No places found
             </Text>
-            <Text className="text-gray-400 mt-2 text-center">
-              Try adjusting your search or filters
+            <Text className="text-gray-500 text-center leading-relaxed">
+              Try adjusting your search terms or explore different filters to
+              discover eco-friendly accommodations
             </Text>
           </View>
         ) : (
@@ -175,9 +258,11 @@ export default function DiscoverScreen() {
             renderItem={renderEcoPlace}
             keyExtractor={(item) => item._id}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 100 }}
           />
         )}
       </View>
+
       <FloatingActionButton
         icon="filter"
         onPress={() =>
