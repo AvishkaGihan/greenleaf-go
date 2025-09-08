@@ -9,8 +9,8 @@ import {
 } from "../controllers/restaurantController";
 import { authenticateAdmin } from "../middleware/auth";
 import {
-  restaurantValidation,
   getRestaurantsValidation,
+  restaurantValidation,
 } from "../middleware/validation/restaurantValidation";
 
 // Public routes
