@@ -56,9 +56,9 @@ export const getEvents = async (req, res, next) => {
           if (event.location && event.location.coordinates) {
             const [lng, lat] = event.location.coordinates;
             const distance = calculateDistance(userLat, userLng, lat, lng);
-            return { ...event.toObject(), distance };
+            return { ...event, distance };
           }
-          return { ...event.toObject(), distance: null };
+          return { ...event, distance: null };
         })
         .filter((event) => !searchRadius || event.distance <= searchRadius);
     }
@@ -83,7 +83,7 @@ export const getEvents = async (req, res, next) => {
         }
 
         return {
-          ...event.toObject(),
+          ...event,
           availableSpots,
           userRsvpStatus,
         };

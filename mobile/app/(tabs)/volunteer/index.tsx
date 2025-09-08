@@ -1,100 +1,88 @@
-import React, { useState } from "react";
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, FlatList, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { ConservationEvent } from "../../../types";
-
-const mockEvents: ConservationEvent[] = [
-  {
-    id: "1",
-    title: "Forest Cleanup Day",
-    type: "cleanup",
-    date: "Saturday, June 12",
-    time: "9:00 AM - 1:00 PM",
-    location: "Forest Park, Portland",
-    description:
-      "Join us for a morning of cleaning up trails and removing invasive species. All equipment provided.",
-    organizer: "Portland Parks & Recreation",
-    difficulty: "easy",
-    volunteersNeeded: 20,
-    spotsLeft: 15,
-    isRegistered: true,
-  },
-  {
-    id: "2",
-    title: "Beach Restoration",
-    type: "restoration",
-    date: "Sunday, June 20",
-    time: "10:00 AM - 2:00 PM",
-    location: "Cannon Beach, OR",
-    description:
-      "Help restore native dune vegetation and protect coastal habitats. Lunch provided.",
-    organizer: "Oregon Coastal Conservancy",
-    difficulty: "moderate",
-    volunteersNeeded: 30,
-    spotsLeft: 22,
-  },
-  {
-    id: "3",
-    title: "Urban Garden Planting",
-    type: "planting",
-    date: "Saturday, June 26",
-    time: "11:00 AM - 3:00 PM",
-    location: "SE Portland Community Center",
-    description:
-      "Help plant a new community garden to provide fresh produce for local residents.",
-    organizer: "Urban Growth Initiative",
-    difficulty: "easy",
-    volunteersNeeded: 15,
-    spotsLeft: 8,
-  },
-];
+import { ConservationEvent } from "@/types";
+import api from "@/api/client";
 
 export default function VolunteerScreen() {
   const [activeTab, setActiveTab] = useState<"all" | "my">("all");
-  const [events, setEvents] = useState(mockEvents);
+  const [events, setEvents] = useState<ConservationEvent[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleRSVP = (eventId: string) => {
-    setEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event.id === eventId
-          ? {
-              ...event,
-              isRegistered: true,
-              spotsLeft: event.spotsLeft - 1,
-            }
-          : event
-      )
-    );
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get("/events");
+      setEvents(data.data.events);
+    } catch (error) {
+      console.error("Failed to load events:", error);
+      Alert.alert("Error", "Failed to load events. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCancelRSVP = (eventId: string) => {
-    setEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event.id === eventId
-          ? {
-              ...event,
-              isRegistered: false,
-              spotsLeft: event.spotsLeft + 1,
-            }
-          : event
-      )
-    );
+  const handleRSVP = async (eventId: string) => {
+    try {
+      // For now, we'll use basic RSVP without additional details
+      // In a real app, you'd show a form for emergency contact, etc.
+      const rsvpData = {
+        emergencyContactName: "Default Contact",
+        emergencyContactPhone: "+1234567890",
+        dietaryRestrictions: "",
+        specialRequirements: "",
+      };
+
+      await api.post(`/events/${eventId}/rsvp`, rsvpData);
+      Alert.alert("Success", "You are registered for this event!");
+      fetchEvents(); // Refresh list
+    } catch (error: any) {
+      Alert.alert(
+        "RSVP failed",
+        error.response?.data?.error?.message || "Something went wrong"
+      );
+    }
   };
 
-  const getEventTypeColor = (type: ConservationEvent["type"]) => {
-    switch (type) {
+  const handleCancelRSVP = async (eventId: string) => {
+    try {
+      await api.delete(`/events/${eventId}/rsvp`);
+      Alert.alert("Success", "RSVP cancelled successfully");
+      fetchEvents(); // Refresh list
+    } catch (error: any) {
+      Alert.alert(
+        "Error",
+        error.response?.data?.error?.message || "Failed to cancel RSVP"
+      );
+    }
+  };
+
+  const getEventTypeColor = (eventType: ConservationEvent["eventType"]) => {
+    switch (eventType) {
       case "cleanup":
         return { bg: "bg-orange-100", text: "text-orange-700" };
       case "restoration":
         return { bg: "bg-blue-100", text: "text-blue-700" };
       case "planting":
         return { bg: "bg-green-100", text: "text-green-700" };
+      case "education":
+        return { bg: "bg-purple-100", text: "text-purple-700" };
+      case "monitoring":
+        return { bg: "bg-indigo-100", text: "text-indigo-700" };
+      default:
+        return { bg: "bg-gray-100", text: "text-gray-700" };
     }
   };
 
-  const getDifficultyColor = (difficulty: ConservationEvent["difficulty"]) => {
-    switch (difficulty) {
+  const getDifficultyColor = (
+    difficultyLevel: ConservationEvent["difficultyLevel"]
+  ) => {
+    switch (difficultyLevel) {
       case "easy":
         return "text-green-600";
       case "moderate":
@@ -104,15 +92,40 @@ export default function VolunteerScreen() {
     }
   };
 
-  const renderEvent = ({ item }: { item: ConservationEvent }) => {
-    const typeColor = getEventTypeColor(item.type);
+  const formatDateTime = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
 
-    if (activeTab === "my" && !item.isRegistered) return null;
+    const dateStr = start.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    });
+
+    const timeStr = `${start.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    })} - ${end.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    })}`;
+
+    return { date: dateStr, time: timeStr };
+  };
+
+  const renderEvent = ({ item }: { item: ConservationEvent }) => {
+    const typeColor = getEventTypeColor(item.eventType);
+    const { date, time } = formatDateTime(item.startDate, item.endDate);
+
+    // Filter for "my events" tab
+    if (activeTab === "my" && item.userRsvpStatus !== "registered") return null;
 
     return (
       <View
         className={`bg-white rounded-xl p-4 mb-3 shadow-sm border-l-4 ${
-          item.isRegistered ? "border-green-500" : "border-orange-400"
+          item.userRsvpStatus === "registered"
+            ? "border-green-500"
+            : "border-orange-400"
         }`}
       >
         <View className="flex-row justify-between items-start mb-3">
@@ -121,7 +134,7 @@ export default function VolunteerScreen() {
           </Text>
           <View className={`px-3 py-1 rounded-full ${typeColor.bg}`}>
             <Text className={`text-sm font-medium ${typeColor.text}`}>
-              {item.type}
+              {item.eventType}
             </Text>
           </View>
         </View>
@@ -130,12 +143,14 @@ export default function VolunteerScreen() {
           <View className="flex-row items-center mb-1">
             <Ionicons name="calendar-outline" size={16} color="#666" />
             <Text className="text-gray-600 ml-2">
-              {item.date} · {item.time}
+              {date} · {time}
             </Text>
           </View>
           <View className="flex-row items-center mb-1">
             <Ionicons name="location-outline" size={16} color="#666" />
-            <Text className="text-gray-600 ml-2">{item.location}</Text>
+            <Text className="text-gray-600 ml-2">
+              {item.city}, {item.country}
+            </Text>
           </View>
         </View>
 
@@ -143,33 +158,37 @@ export default function VolunteerScreen() {
 
         <View className="mb-3">
           <Text className="text-gray-600">
-            <Text className="font-semibold">Organizer:</Text> {item.organizer}
+            <Text className="font-semibold">Difficulty:</Text>{" "}
+            <Text className={getDifficultyColor(item.difficultyLevel)}>
+              {item.difficultyLevel.charAt(0).toUpperCase() +
+                item.difficultyLevel.slice(1)}
+            </Text>{" "}
+            • <Text className="font-semibold">Max Participants:</Text>{" "}
+            {item.maxParticipants}
           </Text>
           <Text className="text-gray-600">
-            <Text className="font-semibold">Difficulty:</Text>{" "}
-            <Text className={getDifficultyColor(item.difficulty)}>
-              {item.difficulty.charAt(0).toUpperCase() +
-                item.difficulty.slice(1)}
-            </Text>{" "}
-            • <Text className="font-semibold">Volunteers needed:</Text>{" "}
-            {item.volunteersNeeded}
+            <Text className="font-semibold">Eco Points:</Text>{" "}
+            {item.ecoPointsReward}
           </Text>
         </View>
 
-        {item.isRegistered ? (
+        {item.userRsvpStatus === "registered" ? (
           <TouchableOpacity
             className="bg-red-500 rounded-full py-3 items-center"
-            onPress={() => handleCancelRSVP(item.id)}
+            onPress={() => handleCancelRSVP(item._id)}
           >
             <Text className="text-white font-semibold">Cancel RSVP</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             className="bg-primary rounded-full py-3 items-center"
-            onPress={() => handleRSVP(item.id)}
+            onPress={() => handleRSVP(item._id)}
+            disabled={item.availableSpots <= 0}
           >
             <Text className="text-white font-semibold">
-              RSVP ({item.spotsLeft} spots left)
+              {item.availableSpots <= 0
+                ? "Event Full"
+                : `RSVP (${item.availableSpots} spots left)`}
             </Text>
           </TouchableOpacity>
         )}
@@ -177,7 +196,9 @@ export default function VolunteerScreen() {
     );
   };
 
-  const myEventsCount = events.filter((e) => e.isRegistered).length;
+  const myEventsCount = events.filter(
+    (e) => e.userRsvpStatus === "registered"
+  ).length;
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -213,12 +234,29 @@ export default function VolunteerScreen() {
           </TouchableOpacity>
         </View>
 
-        <FlatList
-          data={events}
-          renderItem={renderEvent}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-        />
+        {loading && events.length === 0 ? (
+          <View className="flex-1 justify-center items-center">
+            <Text className="text-gray-600">Loading events...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={events}
+            renderItem={renderEvent}
+            keyExtractor={(item) => item._id}
+            showsVerticalScrollIndicator={false}
+            refreshing={loading}
+            onRefresh={fetchEvents}
+            ListEmptyComponent={
+              <View className="flex-1 justify-center items-center py-8">
+                <Text className="text-gray-600">
+                  {activeTab === "my"
+                    ? "No registered events"
+                    : "No events available"}
+                </Text>
+              </View>
+            }
+          />
+        )}
       </View>
     </SafeAreaView>
   );

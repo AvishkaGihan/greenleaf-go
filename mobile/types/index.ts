@@ -92,18 +92,33 @@ export interface GenerateItineraryResponse {
 }
 
 export interface ConservationEvent {
-  id: string;
+  _id: string;
   title: string;
-  type: "cleanup" | "restoration" | "planting";
-  date: string;
-  time: string;
-  location: string;
+  eventType:
+    | "cleanup"
+    | "restoration"
+    | "planting"
+    | "education"
+    | "monitoring";
+  startDate: string;
+  endDate: string;
+  location: {
+    type: string;
+    coordinates: [number, number];
+  };
+  city: string;
+  country: string;
   description: string;
-  organizer: string;
-  difficulty: "easy" | "moderate" | "hard";
-  volunteersNeeded: number;
-  spotsLeft: number;
-  isRegistered?: boolean;
+  maxParticipants: number;
+  ecoPointsReward: number;
+  difficultyLevel: "easy" | "moderate" | "hard";
+  organizer?: string;
+  createdBy: string;
+  isActive: boolean;
+  isApproved: boolean;
+  availableSpots: number;
+  userRsvpStatus?: "registered" | "cancelled" | null;
+  distance?: number;
 }
 
 export interface Badge {
