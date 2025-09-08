@@ -42,7 +42,8 @@ export const getEvents = async (req, res, next) => {
     let events = await ConservationEvent.find(query)
       .sort({ startDate: 1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
 
     // Calculate distances if coordinates provided
     if (latitude && longitude) {

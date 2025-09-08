@@ -40,7 +40,8 @@ export const getRestaurants = async (req, res, next) => {
     let restaurants = await Restaurant.find(query)
       .sort({ ecoRating: -1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
 
     // Calculate distances if coordinates provided
     if (latitude && longitude) {

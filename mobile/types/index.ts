@@ -1,17 +1,40 @@
 export interface EcoPlace {
-  id: string;
+  _id: string;
   name: string;
-  type: "hotel" | "restaurant";
-  rating: number;
+  type:
+    | "hotel"
+    | "hostel"
+    | "resort"
+    | "guesthouse"
+    | "apartment"
+    | "eco-lodge";
+  description?: string;
   address: string;
-  price: string;
-  description: string;
-  sustainability: {
-    energy: number;
-    waste: number;
-    water: number;
-  };
-  reviews: Review[];
+  city: string;
+  stateProvince?: string;
+  country: string;
+  postalCode?: string;
+  phone?: string;
+  email?: string;
+  websiteUrl?: string;
+  bookingUrl?: string;
+  starRating?: number;
+  priceRange: "$" | "$$" | "$$$" | "$$$$";
+  checkInTime?: string;
+  checkOutTime?: string;
+  energyEfficiencyScore?: number;
+  wasteManagementScore?: number;
+  waterConservationScore?: number;
+  localSourcingScore?: number;
+  carbonFootprintScore?: number;
+  ecoRating?: number;
+  amenities?: string[];
+  certifications?: string[];
+  imageUrls?: string[];
+  isVerified: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Review {

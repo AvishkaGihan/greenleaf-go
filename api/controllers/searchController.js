@@ -48,7 +48,8 @@ export const globalSearch = async (req, res, next) => {
       let accommodations = await Accommodation.find(accQuery)
         .select("name city country ecoRating priceRange imageUrls location")
         .limit(parseInt(limit))
-        .skip(skip);
+        .skip(skip)
+        .lean();
 
       // Calculate distances if coordinates provided
       if (latitude && longitude) {
@@ -92,7 +93,8 @@ export const globalSearch = async (req, res, next) => {
           "name city country cuisineType ecoRating priceRange imageUrls location"
         )
         .limit(parseInt(limit))
-        .skip(skip);
+        .skip(skip)
+        .lean();
 
       if (latitude && longitude) {
         const userLat = parseFloat(latitude);
@@ -132,7 +134,8 @@ export const globalSearch = async (req, res, next) => {
           "title city country eventType startDate endDate imageUrls location"
         )
         .limit(parseInt(limit))
-        .skip(skip);
+        .skip(skip)
+        .lean();
 
       if (latitude && longitude) {
         const userLat = parseFloat(latitude);

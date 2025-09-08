@@ -54,7 +54,8 @@ export const getAccommodations = async (req, res, next) => {
     let accommodations = await Accommodation.find(query)
       .sort(sort)
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean(); // Use lean() to return plain objects instead of Mongoose documents
 
     // Calculate distances if coordinates provided
     if (latitude && longitude) {
@@ -67,9 +68,9 @@ export const getAccommodations = async (req, res, next) => {
           if (acc.location && acc.location.coordinates) {
             const [lng, lat] = acc.location.coordinates;
             const distance = calculateDistance(userLat, userLng, lat, lng);
-            return { ...acc.toObject(), distance };
+            return { ...acc, distance };
           }
-          return { ...acc.toObject(), distance: null };
+          return { ...acc, distance: null };
         })
         .filter((acc) => !searchRadius || acc.distance <= searchRadius);
 
@@ -130,7 +131,7 @@ export const getAccommodations = async (req, res, next) => {
 
 export const getAccommodation = async (req, res, next) => {
   try {
-    const accommodation = await Accommodation.findById(req.params.id);
+    const accommodation = await Accommodation.findById(req.params.id).lean();
 
     if (!accommodation || !accommodation.isActive) {
       throw new AppError("Accommodation not found", 404, "NOT_FOUND");
@@ -160,12 +161,13 @@ export const getAccommodation = async (req, res, next) => {
       isVerified: true,
     })
       .limit(5)
-      .select("name type");
+      .select("name type")
+      .lean();
 
     res.json({
       success: true,
       data: {
-        ...accommodation.toObject(),
+        ...accommodation,
         reviewsSummary: {
           averageRating: reviewStats[0]?.averageRating || 0,
           totalReviews: reviewStats[0]?.count || 0,
