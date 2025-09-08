@@ -46,3 +46,6 @@ app-example
 *.njsproj
 *.sln
 *.sw?p
+
+# env
+.env
