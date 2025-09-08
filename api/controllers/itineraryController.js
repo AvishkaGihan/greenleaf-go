@@ -1,8 +1,5 @@
 import Itinerary from "../models/Itinerary";
 import ItineraryItem from "../models/ItineraryItem";
-import Accommodation from "../models/Accommodation";
-import Restaurant from "../models/Restaurant";
-import ConservationEvent from "../models/ConservationEvent";
 import UserActivity from "../models/UserActivity";
 import { AppError } from "../utils/errorHandler";
 import { generateAISuggestions } from "../services/aiService";
