@@ -40,9 +40,39 @@ export interface EcoPlace {
 
 export interface Review {
   id: string;
-  author: string;
+  user: {
+    id: string;
+    firstName: string;
+    profileImageUrl?: string;
+    ecoLevel?: number;
+  };
   rating: number;
+  ecoFriendlinessRating?: number;
+  title?: string;
   comment: string;
+  stayDate?: string;
+  ecoInitiativesObserved?: string[];
+  photos?: string[];
+  helpfulVotes: number;
+  totalVotes: number;
+  isVerified: boolean;
+  createdAt: string;
+}
+
+export interface ReviewSummary {
+  averageRating: number;
+  totalReviews: number;
+  averageEcoRating: number;
+  ratingDistribution: { [key: number]: number };
+}
+
+export interface CreateReviewData {
+  rating: number;
+  ecoFriendlinessRating?: number;
+  title?: string;
+  comment: string;
+  stayDate?: string;
+  ecoInitiativesObserved?: string[];
 }
 
 export interface Itinerary {

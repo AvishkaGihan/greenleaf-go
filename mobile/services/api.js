@@ -140,6 +140,32 @@ export const accommodationAPI = {
   },
 };
 
+// Review API functions
+export const reviewAPI = {
+  getAccommodationReviews: async (accommodationId, params = {}) => {
+    const response = await api.get(
+      `/reviews/accommodations/${accommodationId}/reviews`,
+      { params }
+    );
+    return response.data;
+  },
+
+  createAccommodationReview: async (accommodationId, reviewData) => {
+    const response = await api.post(
+      `/reviews/accommodations/${accommodationId}/reviews`,
+      reviewData
+    );
+    return response.data;
+  },
+
+  markReviewHelpful: async (reviewId, isHelpful) => {
+    const response = await api.put(`/reviews/${reviewId}/helpful`, {
+      is_helpful: isHelpful,
+    });
+    return response.data;
+  },
+};
+
 // Itinerary API functions
 export const itineraryAPI = {
   getItineraries: async (params = {}) => {

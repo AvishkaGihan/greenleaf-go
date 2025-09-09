@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -15,19 +15,46 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { EcoPlace } from "../../types";
+import { EcoPlace, Review, ReviewSummary, CreateReviewData } from "../../types";
 import EcoRating from "../../components/EcoRating";
-import { accommodationAPI } from "../../services/api";
+import ReviewsList from "../../components/ReviewsList";
+import WriteReviewModal from "../../components/WriteReviewModal";
+import { accommodationAPI, reviewAPI } from "../../services/api";
 
 export default function EcoPlaceDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+
+  // All state hooks
   const [place, setPlace] = useState<EcoPlace | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [showWriteReview, setShowWriteReview] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "reviews">(
+    "overview"
+  );
 
+  // Review functions
+  const fetchReviews = useCallback(async () => {
+    if (!id) return;
+
+    try {
+      setReviewsLoading(true);
+      const response = await reviewAPI.getAccommodationReviews(id as string);
+      setReviews(response.data.reviews);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      Alert.alert("Error", "Failed to load reviews. Please try again.");
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [id]);
+
+  // All useEffect hooks
   useEffect(() => {
     const fetchPlace = async () => {
       try {
@@ -36,7 +63,6 @@ export default function EcoPlaceDetailScreen() {
         const response = await accommodationAPI.getAccommodation(id);
         const acc = response.data;
 
-        // Map API response to EcoPlace interface
         const mappedPlace: EcoPlace = {
           id: acc._id,
           name: acc.name,
@@ -52,10 +78,9 @@ export default function EcoPlaceDetailScreen() {
             waste: (acc.wasteManagementScore || 0) * 20,
             water: (acc.waterConservationScore || 0) * 20,
           },
-          reviews: [], // Reviews will be handled separately if needed
+          reviews: [],
           reviewsSummary: acc.reviewsSummary,
           nearbyAttractions: acc.nearbyAttractions,
-          // Additional API data
           amenities: acc.amenities || [],
           certifications: acc.certifications || [],
           phone: acc.phone,
@@ -80,6 +105,12 @@ export default function EcoPlaceDetailScreen() {
       fetchPlace();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (activeTab === "reviews") {
+      fetchReviews();
+    }
+  }, [activeTab, fetchReviews]);
 
   if (loading) {
     return (
@@ -263,6 +294,43 @@ export default function EcoPlaceDetailScreen() {
     }
   };
 
+  const handleWriteReview = async (reviewData: CreateReviewData) => {
+    try {
+      await reviewAPI.createAccommodationReview(id as string, reviewData);
+      Alert.alert(
+        "Review Submitted",
+        "Thank you for your review! You've earned 25 eco points.",
+        [{ text: "OK" }]
+      );
+      // Refresh reviews after successful submission
+      if (activeTab === "reviews") {
+        fetchReviews();
+      }
+      // Update the place data to reflect new review stats
+      const response = await accommodationAPI.getAccommodation(id);
+      const acc = response.data;
+      setPlace((prev) =>
+        prev ? { ...prev, reviewsSummary: acc.reviewsSummary } : null
+      );
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      throw error; // Re-throw to let the modal handle the error
+    }
+  };
+
+  const handleMarkHelpful = async (reviewId: string, isHelpful: boolean) => {
+    try {
+      await reviewAPI.markReviewHelpful(reviewId, isHelpful);
+      // Refresh reviews to show updated helpful count
+      if (activeTab === "reviews") {
+        fetchReviews();
+      }
+    } catch (error) {
+      console.error("Error marking review helpful:", error);
+      Alert.alert("Error", "Failed to mark review. Please try again.");
+    }
+  };
+
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }).map((_, i) => (
       <Ionicons
@@ -422,304 +490,374 @@ export default function EcoPlaceDetailScreen() {
             </View>
           </View>
 
-          {/* Image Gallery */}
-          {place.imageUrls && place.imageUrls.length > 1 && (
-            <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-              <View className="flex-row items-center mb-4">
-                <View className="w-8 h-8 bg-indigo-100 rounded-full items-center justify-center mr-3">
-                  <Ionicons name="images" size={16} color="#6366f1" />
-                </View>
-                <Text className="text-xl font-bold text-gray-900">
-                  Photos ({place.imageUrls.length})
-                </Text>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="flex-row"
+          {/* Tab Navigation */}
+          <View className="bg-white rounded-2xl p-2 shadow-sm mb-6">
+            <View className="flex-row">
+              <TouchableOpacity
+                className={`flex-1 py-3 px-4 rounded-xl ${
+                  activeTab === "overview" ? "bg-primary" : "bg-transparent"
+                }`}
+                onPress={() => setActiveTab("overview")}
               >
-                {place.imageUrls.map((imageUrl, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    className={`w-40 h-28 rounded-2xl overflow-hidden bg-gray-100 ${
-                      index < place.imageUrls!.length - 1 ? "mr-3" : ""
-                    }`}
-                    onPress={() => {
-                      // Could implement full-screen image viewer here
-                      Alert.alert(
-                        "Photo",
-                        `Viewing photo ${index + 1} of ${
-                          place.imageUrls!.length
-                        }`
-                      );
-                    }}
+                <Text
+                  className={`text-center font-semibold ${
+                    activeTab === "overview" ? "text-white" : "text-gray-600"
+                  }`}
+                >
+                  Overview
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-3 px-4 rounded-xl ${
+                  activeTab === "reviews" ? "bg-primary" : "bg-transparent"
+                }`}
+                onPress={() => setActiveTab("reviews")}
+              >
+                <Text
+                  className={`text-center font-semibold ${
+                    activeTab === "reviews" ? "text-white" : "text-gray-600"
+                  }`}
+                >
+                  Reviews{" "}
+                  {place.reviewsSummary && place.reviewsSummary.totalReviews > 0
+                    ? `(${place.reviewsSummary.totalReviews})`
+                    : ""}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Tab Content */}
+          {activeTab === "overview" && (
+            <>
+              {/* Image Gallery */}
+              {place.imageUrls && place.imageUrls.length > 1 && (
+                <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                  <View className="flex-row items-center mb-4">
+                    <View className="w-8 h-8 bg-indigo-100 rounded-full items-center justify-center mr-3">
+                      <Ionicons name="images" size={16} color="#6366f1" />
+                    </View>
+                    <Text className="text-xl font-bold text-gray-900">
+                      Photos ({place.imageUrls.length})
+                    </Text>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    className="flex-row"
                   >
-                    <Image
-                      source={{ uri: imageUrl }}
-                      className="w-full h-full"
-                      resizeMode="cover"
-                      onError={(e) => {
-                        console.log(
-                          `Image ${index} failed to load:`,
-                          e.nativeEvent.error
-                        );
-                      }}
-                    />
-                    {/* Photo overlay indicator */}
-                    <View className="absolute top-2 right-2">
-                      <View className="bg-black/50 rounded-full w-6 h-6 items-center justify-center">
-                        <Text className="text-white text-xs font-bold">
-                          {index + 1}
+                    {place.imageUrls.map((imageUrl, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        className={`w-40 h-28 rounded-2xl overflow-hidden bg-gray-100 ${
+                          index < place.imageUrls!.length - 1 ? "mr-3" : ""
+                        }`}
+                        onPress={() => {
+                          // Could implement full-screen image viewer here
+                          Alert.alert(
+                            "Photo",
+                            `Viewing photo ${index + 1} of ${
+                              place.imageUrls!.length
+                            }`
+                          );
+                        }}
+                      >
+                        <Image
+                          source={{ uri: imageUrl }}
+                          className="w-full h-full"
+                          resizeMode="cover"
+                          onError={(e) => {
+                            console.log(
+                              `Image ${index} failed to load:`,
+                              e.nativeEvent.error
+                            );
+                          }}
+                        />
+                        {/* Photo overlay indicator */}
+                        <View className="absolute top-2 right-2">
+                          <View className="bg-black/50 rounded-full w-6 h-6 items-center justify-center">
+                            <Text className="text-white text-xs font-bold">
+                              {index + 1}
+                            </Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* About Section */}
+              {place.description && (
+                <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                  <Text className="text-xl font-bold text-gray-900 mb-3">
+                    About
+                  </Text>
+                  <Text className="text-gray-700 leading-6 text-base">
+                    {place.description}
+                  </Text>
+                </View>
+              )}
+
+              {/* Sustainability Scores */}
+              <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                <View className="flex-row items-center mb-4">
+                  <View className="w-8 h-8 bg-green-100 rounded-full items-center justify-center mr-3">
+                    <Ionicons name="leaf" size={16} color="#22c55e" />
+                  </View>
+                  <Text className="text-xl font-bold text-gray-900">
+                    Sustainability
+                  </Text>
+                </View>
+                <EcoRating
+                  energy={place.sustainability.energy}
+                  waste={place.sustainability.waste}
+                  water={place.sustainability.water}
+                />
+              </View>
+
+              {/* Amenities */}
+              {place.amenities && place.amenities.length > 0 && (
+                <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                  <View className="flex-row items-center mb-4">
+                    <View className="w-8 h-8 bg-purple-100 rounded-full items-center justify-center mr-3">
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={16}
+                        color="#8b5cf6"
+                      />
+                    </View>
+                    <Text className="text-xl font-bold text-gray-900">
+                      Amenities
+                    </Text>
+                  </View>
+
+                  <View className="flex-row flex-wrap">
+                    {place.amenities.map((amenity, index) => (
+                      <View
+                        key={index}
+                        className="bg-gray-50 rounded-2xl px-4 py-2 mr-2 mb-2"
+                      >
+                        <Text className="text-gray-700 text-sm">{amenity}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Certifications */}
+              {place.certifications && place.certifications.length > 0 && (
+                <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                  <View className="flex-row items-center mb-4">
+                    <View className="w-8 h-8 bg-green-100 rounded-full items-center justify-center mr-3">
+                      <Ionicons name="ribbon" size={16} color="#22c55e" />
+                    </View>
+                    <Text className="text-xl font-bold text-gray-900">
+                      Certifications
+                    </Text>
+                  </View>
+
+                  <View>
+                    {place.certifications.map((cert, index) => (
+                      <View
+                        key={index}
+                        className={`flex-row items-center p-4 bg-green-50 rounded-2xl ${
+                          index < place.certifications!.length - 1 ? "mb-3" : ""
+                        }`}
+                      >
+                        <View className="w-8 h-8 bg-green-100 rounded-full items-center justify-center mr-3">
+                          <Ionicons name="medal" size={16} color="#22c55e" />
+                        </View>
+                        <Text className="text-gray-800 font-medium flex-1">
+                          {cert}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Contact Information */}
+              {(place.phone || place.email || place.websiteUrl) && (
+                <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                  <View className="flex-row items-center mb-4">
+                    <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center mr-3">
+                      <Ionicons name="call" size={16} color="#3b82f6" />
+                    </View>
+                    <Text className="text-xl font-bold text-gray-900">
+                      Contact
+                    </Text>
+                  </View>
+
+                  <View>
+                    {place.phone && (
+                      <TouchableOpacity className="flex-row items-center p-4 bg-gray-50 rounded-2xl mb-3">
+                        <Ionicons name="call-outline" size={20} color="#666" />
+                        <Text className="text-gray-800 ml-3 flex-1">
+                          {place.phone}
+                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={16}
+                          color="#9CA3AF"
+                        />
+                      </TouchableOpacity>
+                    )}
+
+                    {place.email && (
+                      <TouchableOpacity className="flex-row items-center p-4 bg-gray-50 rounded-2xl mb-3">
+                        <Ionicons name="mail-outline" size={20} color="#666" />
+                        <Text className="text-gray-800 ml-3 flex-1">
+                          {place.email}
+                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={16}
+                          color="#9CA3AF"
+                        />
+                      </TouchableOpacity>
+                    )}
+
+                    {place.websiteUrl && (
+                      <TouchableOpacity className="flex-row items-center p-4 bg-gray-50 rounded-2xl">
+                        <Ionicons name="globe-outline" size={20} color="#666" />
+                        <Text className="text-gray-800 ml-3 flex-1">
+                          Visit Website
+                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={16}
+                          color="#9CA3AF"
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Reviews Section */}
+              <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                <View className="flex-row items-center mb-4">
+                  <View className="w-8 h-8 bg-yellow-100 rounded-full items-center justify-center mr-3">
+                    <Ionicons name="star" size={16} color="#fbbf24" />
+                  </View>
+                  <Text className="text-xl font-bold text-gray-900">
+                    Reviews
+                  </Text>
+                </View>
+
+                {place.reviewsSummary &&
+                place.reviewsSummary.totalReviews > 0 ? (
+                  <View>
+                    <View className="flex-row items-center mb-4">
+                      <Text className="text-3xl font-bold text-gray-900 mr-2">
+                        {place.reviewsSummary.averageRating.toFixed(1)}
+                      </Text>
+                      <View>
+                        <View className="flex-row mb-1">
+                          {renderStars(
+                            Math.round(place.reviewsSummary.averageRating)
+                          )}
+                        </View>
+                        <Text className="text-gray-600 text-sm">
+                          {place.reviewsSummary.totalReviews} reviews
                         </Text>
                       </View>
                     </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
 
-          {/* About Section */}
-          {place.description && (
-            <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-              <Text className="text-xl font-bold text-gray-900 mb-3">
-                About
-              </Text>
-              <Text className="text-gray-700 leading-6 text-base">
-                {place.description}
-              </Text>
-            </View>
-          )}
-
-          {/* Sustainability Scores */}
-          <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-            <View className="flex-row items-center mb-4">
-              <View className="w-8 h-8 bg-green-100 rounded-full items-center justify-center mr-3">
-                <Ionicons name="leaf" size={16} color="#22c55e" />
-              </View>
-              <Text className="text-xl font-bold text-gray-900">
-                Sustainability
-              </Text>
-            </View>
-            <EcoRating
-              energy={place.sustainability.energy}
-              waste={place.sustainability.waste}
-              water={place.sustainability.water}
-            />
-          </View>
-
-          {/* Amenities */}
-          {place.amenities && place.amenities.length > 0 && (
-            <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-              <View className="flex-row items-center mb-4">
-                <View className="w-8 h-8 bg-purple-100 rounded-full items-center justify-center mr-3">
-                  <Ionicons name="checkmark-circle" size={16} color="#8b5cf6" />
-                </View>
-                <Text className="text-xl font-bold text-gray-900">
-                  Amenities
-                </Text>
-              </View>
-
-              <View className="flex-row flex-wrap">
-                {place.amenities.map((amenity, index) => (
-                  <View
-                    key={index}
-                    className="bg-gray-50 rounded-2xl px-4 py-2 mr-2 mb-2"
-                  >
-                    <Text className="text-gray-700 text-sm">{amenity}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Certifications */}
-          {place.certifications && place.certifications.length > 0 && (
-            <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-              <View className="flex-row items-center mb-4">
-                <View className="w-8 h-8 bg-green-100 rounded-full items-center justify-center mr-3">
-                  <Ionicons name="ribbon" size={16} color="#22c55e" />
-                </View>
-                <Text className="text-xl font-bold text-gray-900">
-                  Certifications
-                </Text>
-              </View>
-
-              <View>
-                {place.certifications.map((cert, index) => (
-                  <View
-                    key={index}
-                    className={`flex-row items-center p-4 bg-green-50 rounded-2xl ${
-                      index < place.certifications!.length - 1 ? "mb-3" : ""
-                    }`}
-                  >
-                    <View className="w-8 h-8 bg-green-100 rounded-full items-center justify-center mr-3">
-                      <Ionicons name="medal" size={16} color="#22c55e" />
+                    <View className="bg-green-50 rounded-2xl p-4">
+                      <View className="flex-row items-center">
+                        <Ionicons name="leaf" size={16} color="#22c55e" />
+                        <Text className="text-gray-700 ml-2">
+                          Eco Rating:{" "}
+                          {place.reviewsSummary.averageEcoRating.toFixed(1)}/5
+                        </Text>
+                      </View>
                     </View>
-                    <Text className="text-gray-800 font-medium flex-1">
-                      {cert}
-                    </Text>
                   </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Contact Information */}
-          {(place.phone || place.email || place.websiteUrl) && (
-            <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-              <View className="flex-row items-center mb-4">
-                <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Ionicons name="call" size={16} color="#3b82f6" />
-                </View>
-                <Text className="text-xl font-bold text-gray-900">Contact</Text>
-              </View>
-
-              <View>
-                {place.phone && (
-                  <TouchableOpacity className="flex-row items-center p-4 bg-gray-50 rounded-2xl mb-3">
-                    <Ionicons name="call-outline" size={20} color="#666" />
-                    <Text className="text-gray-800 ml-3 flex-1">
-                      {place.phone}
-                    </Text>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={16}
-                      color="#9CA3AF"
-                    />
-                  </TouchableOpacity>
-                )}
-
-                {place.email && (
-                  <TouchableOpacity className="flex-row items-center p-4 bg-gray-50 rounded-2xl mb-3">
-                    <Ionicons name="mail-outline" size={20} color="#666" />
-                    <Text className="text-gray-800 ml-3 flex-1">
-                      {place.email}
-                    </Text>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={16}
-                      color="#9CA3AF"
-                    />
-                  </TouchableOpacity>
-                )}
-
-                {place.websiteUrl && (
-                  <TouchableOpacity className="flex-row items-center p-4 bg-gray-50 rounded-2xl">
-                    <Ionicons name="globe-outline" size={20} color="#666" />
-                    <Text className="text-gray-800 ml-3 flex-1">
-                      Visit Website
-                    </Text>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={16}
-                      color="#9CA3AF"
-                    />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          )}
-
-          {/* Reviews Section */}
-          <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-            <View className="flex-row items-center mb-4">
-              <View className="w-8 h-8 bg-yellow-100 rounded-full items-center justify-center mr-3">
-                <Ionicons name="star" size={16} color="#fbbf24" />
-              </View>
-              <Text className="text-xl font-bold text-gray-900">Reviews</Text>
-            </View>
-
-            {place.reviewsSummary && place.reviewsSummary.totalReviews > 0 ? (
-              <View>
-                <View className="flex-row items-center mb-4">
-                  <Text className="text-3xl font-bold text-gray-900 mr-2">
-                    {place.reviewsSummary.averageRating.toFixed(1)}
-                  </Text>
-                  <View>
-                    <View className="flex-row mb-1">
-                      {renderStars(
-                        Math.round(place.reviewsSummary.averageRating)
-                      )}
-                    </View>
-                    <Text className="text-gray-600 text-sm">
-                      {place.reviewsSummary.totalReviews} reviews
-                    </Text>
-                  </View>
-                </View>
-
-                <View className="bg-green-50 rounded-2xl p-4">
-                  <View className="flex-row items-center">
-                    <Ionicons name="leaf" size={16} color="#22c55e" />
-                    <Text className="text-gray-700 ml-2">
-                      Eco Rating:{" "}
-                      {place.reviewsSummary.averageEcoRating.toFixed(1)}/5
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            ) : (
-              <View className="items-center py-8">
-                <View className="w-16 h-16 bg-gray-100 rounded-2xl items-center justify-center mb-4">
-                  <Ionicons
-                    name="chatbubble-outline"
-                    size={24}
-                    color="#9CA3AF"
-                  />
-                </View>
-                <Text className="text-gray-600 text-center">
-                  No reviews yet. Be the first to share your experience!
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Nearby Places */}
-          {place.nearbyAttractions && place.nearbyAttractions.length > 0 && (
-            <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-              <View className="flex-row items-center mb-4">
-                <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Ionicons name="location" size={16} color="#3b82f6" />
-                </View>
-                <Text className="text-xl font-bold text-gray-900">
-                  Nearby Places
-                </Text>
-              </View>
-
-              <View>
-                {place.nearbyAttractions.map((attraction, index) => (
-                  <View
-                    key={index}
-                    className={`flex-row items-center p-4 bg-gray-50 rounded-2xl ${
-                      index < (place.nearbyAttractions?.length || 0) - 1
-                        ? "mb-3"
-                        : ""
-                    }`}
-                  >
-                    <View className="w-10 h-10 bg-white rounded-2xl items-center justify-center mr-3">
+                ) : (
+                  <View className="items-center py-8">
+                    <View className="w-16 h-16 bg-gray-100 rounded-2xl items-center justify-center mb-4">
                       <Ionicons
-                        name={getTypeIcon(attraction.type)}
-                        size={16}
-                        color="#666"
+                        name="chatbubble-outline"
+                        size={24}
+                        color="#9CA3AF"
                       />
                     </View>
-                    <View className="flex-1">
-                      <Text className="font-semibold text-gray-900 mb-1">
-                        {attraction.name}
-                      </Text>
-                      <Text className="text-gray-600 text-sm capitalize">
-                        {attraction.type}
+                    <Text className="text-gray-600 text-center">
+                      No reviews yet. Be the first to share your experience!
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Nearby Places */}
+              {place.nearbyAttractions &&
+                place.nearbyAttractions.length > 0 && (
+                  <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                    <View className="flex-row items-center mb-4">
+                      <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center mr-3">
+                        <Ionicons name="location" size={16} color="#3b82f6" />
+                      </View>
+                      <Text className="text-xl font-bold text-gray-900">
+                        Nearby Places
                       </Text>
                     </View>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={16}
-                      color="#9CA3AF"
-                    />
+
+                    <View>
+                      {place.nearbyAttractions.map((attraction, index) => (
+                        <View
+                          key={index}
+                          className={`flex-row items-center p-4 bg-gray-50 rounded-2xl ${
+                            index < (place.nearbyAttractions?.length || 0) - 1
+                              ? "mb-3"
+                              : ""
+                          }`}
+                        >
+                          <View className="w-10 h-10 bg-white rounded-2xl items-center justify-center mr-3">
+                            <Ionicons
+                              name={getTypeIcon(attraction.type)}
+                              size={16}
+                              color="#666"
+                            />
+                          </View>
+                          <View className="flex-1">
+                            <Text className="font-semibold text-gray-900 mb-1">
+                              {attraction.name}
+                            </Text>
+                            <Text className="text-gray-600 text-sm capitalize">
+                              {attraction.type}
+                            </Text>
+                          </View>
+                          <Ionicons
+                            name="chevron-forward"
+                            size={16}
+                            color="#9CA3AF"
+                          />
+                        </View>
+                      ))}
+                    </View>
                   </View>
-                ))}
-              </View>
-            </View>
+                )}
+            </>
+          )}
+
+          {activeTab === "reviews" && (
+            <ReviewsList
+              reviews={reviews}
+              summary={
+                place.reviewsSummary || {
+                  averageRating: 0,
+                  totalReviews: 0,
+                  averageEcoRating: 0,
+                  ratingDistribution: {},
+                }
+              }
+              onMarkHelpful={handleMarkHelpful}
+              onWriteReview={() => setShowWriteReview(true)}
+              loading={reviewsLoading}
+              canWriteReview={true} // TODO: Check authentication status
+            />
           )}
 
           {/* Success Message */}
@@ -740,6 +878,14 @@ export default function EcoPlaceDetailScreen() {
           <View className="h-6" />
         </View>
       </ScrollView>
+
+      {/* Write Review Modal */}
+      <WriteReviewModal
+        visible={showWriteReview}
+        onClose={() => setShowWriteReview(false)}
+        onSubmit={handleWriteReview}
+        placeName={place.name}
+      />
     </SafeAreaView>
   );
 }
