@@ -6,6 +6,7 @@ export interface EcoPlace {
   address: string;
   price: string;
   description: string;
+  imageUrl?: string; // Main image for the accommodation
   sustainability: {
     energy: number;
     waste: number;
