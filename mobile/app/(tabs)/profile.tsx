@@ -481,7 +481,7 @@ export default function ProfileScreen() {
               <FlatList
                 data={activities.slice(0, 3)}
                 renderItem={renderActivity}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item, index) => `${item.id}-${index}`}
                 scrollEnabled={false}
               />
             ) : (
@@ -509,7 +509,7 @@ export default function ProfileScreen() {
                 <FlatList
                   data={uiBadges.slice(0, 6)}
                   renderItem={renderBadge}
-                  keyExtractor={(item) => item.id}
+                  keyExtractor={(item, index) => `${item.id}-${index}`}
                   numColumns={3}
                   scrollEnabled={false}
                   ItemSeparatorComponent={() => <View className="h-4" />}
@@ -551,7 +551,7 @@ export default function ProfileScreen() {
               <FlatList
                 data={itineraries}
                 renderItem={renderItinerary}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item, index) => `${item.id}-${index}`}
                 scrollEnabled={false}
                 ItemSeparatorComponent={() => <View className="h-3" />}
               />
