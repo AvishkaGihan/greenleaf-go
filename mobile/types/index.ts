@@ -7,6 +7,7 @@ export interface EcoPlace {
   price: string;
   description: string;
   imageUrl?: string; // Main image for the accommodation
+  imageUrls?: string[]; // All available images
   sustainability: {
     energy: number;
     waste: number;
@@ -25,6 +26,15 @@ export interface EcoPlace {
     type: string;
     distance: number | null;
   }>;
+  // Additional API fields
+  amenities?: string[];
+  certifications?: string[];
+  phone?: string;
+  email?: string;
+  websiteUrl?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+  starRating?: number;
 }
 
 export interface Review {
