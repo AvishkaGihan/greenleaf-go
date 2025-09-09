@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,122 +6,136 @@ import {
   TouchableOpacity,
   FlatList,
   Alert,
+  ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { Badge, Itinerary, User } from "../../types";
+import { Badge, Itinerary, User, UserActivity } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
-
-const mockUser: User = {
-  name: "Alex Johnson",
-  email: "alex@example.com",
-  location: "Portland, OR",
-  preferences: ["Eco-lodges", "Local cuisine", "Outdoor activities"],
-  badges: [
-    {
-      id: "1",
-      name: "First Trip",
-      icon: "leaf",
-      earned: true,
-      color: "#4caf50",
-    },
-    {
-      id: "2",
-      name: "Volunteer",
-      icon: "hands-helping",
-      earned: true,
-      color: "#2196f3",
-    },
-    { id: "3", name: "Planner", icon: "route", earned: true, color: "#ff9800" },
-    {
-      id: "4",
-      name: "Eco-Warrior",
-      icon: "recycle",
-      earned: true,
-      color: "#9c27b0",
-    },
-    { id: "5", name: "Explorer", icon: "lock", earned: false, color: "#888" },
-    { id: "6", name: "Green Guru", icon: "lock", earned: false, color: "#888" },
-  ],
-  impact: {
-    co2Saved: 12.5,
-    tripsCompleted: 3,
-    hoursVolunteered: 8,
-  },
-};
-
-const mockItineraries: Itinerary[] = [
-  {
-    id: "1",
-    destination: "Portland Sustainable Adventure",
-    dates: "4 days • June 15-18, 2025",
-    budget: "$150/day",
-    interests: "hiking, local culture",
-    carbonFootprint: 2.3,
-    days: [],
-  },
-  {
-    id: "2",
-    destination: "Coastal Conservation Journey",
-    dates: "3 days • July 8-10, 2025",
-    budget: "$120/day",
-    interests: "beach cleanup, wildlife",
-    carbonFootprint: 1.8,
-    days: [],
-  },
-  {
-    id: "3",
-    destination: "Columbia Gorge Adventure",
-    dates: "2 days • August 14-15, 2025",
-    budget: "$100/day",
-    interests: "hiking, waterfalls",
-    carbonFootprint: 1.5,
-    days: [],
-  },
-];
+import { userAPI } from "../../services/api";
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const [profileData, setProfileData] = useState<User | null>(null);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await logout();
-            } catch (error) {
-              console.error("Logout error:", error);
-            }
-          },
-        },
-      ]
-    );
+  useEffect(() => {
+    if (user) {
+      fetchProfileData();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchProfileData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [profileRes, badgesRes, itinerariesRes, activitiesRes] =
+        await Promise.all([
+          userAPI.getProfile(),
+          userAPI.getUserBadges(),
+          userAPI.getUserItineraries(),
+          userAPI.getUserActivities(),
+        ]);
+
+      setProfileData(profileRes.data);
+      setBadges(badgesRes.data.badges || []);
+      setItineraries(itinerariesRes.data.itineraries || []);
+      setActivities(activitiesRes.data.activities || []);
+    } catch (err) {
+      console.error("Error fetching profile data:", err);
+      setError("Failed to load profile data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Use real user data if available, otherwise fall back to mock data
-  const displayUser = user ? {
-    name: `${user.firstName} ${user.lastName}`,
-    email: user.email,
-    location: "Your Location", // This could come from user profile
-    preferences: ["Eco-lodges", "Local cuisine", "Outdoor activities"],
-    badges: mockUser.badges,
-    impact: {
-      co2Saved: 12.5,
-      tripsCompleted: 3,
-      hoursVolunteered: 8,
-    },
-  } : mockUser;
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await logout();
+          } catch (error) {
+            console.error("Logout error:", error);
+          }
+        },
+      },
+    ]);
+  };
 
-  const renderBadge = ({ item }: { item: Badge }) => (
+  // Calculate impact from activities
+  const impact = activities.reduce(
+    (acc, activity) => {
+      if (activity.activityType === "trip_completed") acc.tripsCompleted += 1;
+      if (activity.activityType === "volunteer")
+        acc.hoursVolunteered += activity.pointsEarned / 10; // Assuming 10 points per hour
+      // CO2 saved could be calculated differently, for now use a placeholder
+      return acc;
+    },
+    { co2Saved: 12.5, tripsCompleted: 0, hoursVolunteered: 0 }
+  );
+
+  // Map badges for UI (add icon, earned, color based on API data)
+  const uiBadges = badges.map((badge) => ({
+    ...badge,
+    icon: badge.emoji || "medal", // Use emoji as icon or default
+    earned: !!badge.earnedAt,
+    color:
+      badge.category === "eco"
+        ? "#4caf50"
+        : badge.category === "volunteer"
+        ? "#2196f3"
+        : "#ff9800", // Simple color mapping
+  }));
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-background justify-center items-center">
+        <ActivityIndicator size="large" color="#4caf50" />
+        <Text className="mt-4 text-gray-600">Loading profile...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView className="flex-1 bg-background justify-center items-center px-4">
+        <Text className="text-red-500 text-center mb-4">{error}</Text>
+        <TouchableOpacity
+          className="bg-primary rounded-full py-2 px-4"
+          onPress={fetchProfileData}
+        >
+          <Text className="text-white font-semibold">Retry</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  if (!user || !profileData) {
+    return (
+      <SafeAreaView className="flex-1 bg-background justify-center items-center">
+        <Text className="text-gray-600">
+          Please log in to view your profile.
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  const renderBadge = ({ item }: { item: any }) => (
     <View
       className={`w-16 h-16 rounded-full items-center justify-center mr-3 mb-3 ${
         item.earned ? "" : "border-2 border-dashed border-gray-300"
@@ -160,12 +174,21 @@ export default function ProfileScreen() {
         {/* Profile Header */}
         <View className="items-center mb-6">
           <View className="w-24 h-24 bg-primary rounded-full items-center justify-center mb-3">
-            <Ionicons name="person" size={40} color="white" />
+            {profileData.profileImageUrl ? (
+              <Image
+                source={{ uri: profileData.profileImageUrl }}
+                className="w-24 h-24 rounded-full"
+              />
+            ) : (
+              <Ionicons name="person" size={40} color="white" />
+            )}
           </View>
           <Text className="text-2xl font-bold text-gray-800">
-            {displayUser.name}
+            {`${profileData.firstName} ${profileData.lastName}`}
           </Text>
-          <Text className="text-gray-600">Eco-Traveler since 2023</Text>
+          <Text className="text-gray-600">
+            Eco-Traveler • Level {profileData.ecoLevel}
+          </Text>
         </View>
 
         {/* Profile Info */}
@@ -175,25 +198,26 @@ export default function ProfileScreen() {
           </Text>
           <View className="mb-3">
             <Text className="text-gray-600">
-              <Text className="font-semibold">Name:</Text> {displayUser.name}
+              <Text className="font-semibold">Name:</Text>{" "}
+              {`${profileData.firstName} ${profileData.lastName}`}
             </Text>
             <Text className="text-gray-600">
-              <Text className="font-semibold">Email:</Text> {displayUser.email}
+              <Text className="font-semibold">Email:</Text> {profileData.email}
             </Text>
             <Text className="text-gray-600">
-              <Text className="font-semibold">Location:</Text>{" "}
-              {displayUser.location}
+              <Text className="font-semibold">Phone:</Text>{" "}
+              {profileData.phone || "Not provided"}
             </Text>
             <Text className="text-gray-600">
-              <Text className="font-semibold">Travel Preferences:</Text>{" "}
-              {displayUser.preferences.join(", ")}
+              <Text className="font-semibold">Eco Interests:</Text>{" "}
+              {profileData.ecoInterests?.join(", ") || "None specified"}
             </Text>
           </View>
           <View className="flex-row justify-between">
             <TouchableOpacity className="bg-primary rounded-full py-2 px-4 items-center flex-1 mr-2">
               <Text className="text-white font-semibold">Edit Profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               className="bg-red-500 rounded-full py-2 px-4 items-center flex-1 ml-2"
               onPress={handleLogout}
             >
@@ -208,10 +232,13 @@ export default function ProfileScreen() {
             <Ionicons name="map" size={20} /> Saved Itineraries
           </Text>
           <FlatList
-            data={mockItineraries}
+            data={itineraries}
             renderItem={renderItinerary}
             keyExtractor={(item) => item.id}
             scrollEnabled={false}
+            ListEmptyComponent={
+              <Text className="text-gray-500">No itineraries found.</Text>
+            }
           />
         </View>
 
@@ -221,11 +248,14 @@ export default function ProfileScreen() {
             <Ionicons name="medal" size={20} /> Earned Eco-Badges
           </Text>
           <FlatList
-            data={displayUser.badges}
+            data={uiBadges}
             renderItem={renderBadge}
             keyExtractor={(item) => item.id}
             numColumns={3}
             scrollEnabled={false}
+            ListEmptyComponent={
+              <Text className="text-gray-500">No badges earned yet.</Text>
+            }
           />
           <Text className="text-gray-500 text-sm mt-3">
             <Ionicons name="information-circle" size={14} /> Complete more
@@ -241,19 +271,19 @@ export default function ProfileScreen() {
           <View className="flex-row justify-around">
             <View className="items-center">
               <Text className="text-2xl font-bold text-green-600">
-                {displayUser.impact.co2Saved}kg
+                {impact.co2Saved}kg
               </Text>
               <Text className="text-gray-500 text-sm">CO₂ Saved</Text>
             </View>
             <View className="items-center">
               <Text className="text-2xl font-bold text-blue-600">
-                {displayUser.impact.tripsCompleted}
+                {impact.tripsCompleted}
               </Text>
               <Text className="text-gray-500 text-sm">Trips Completed</Text>
             </View>
             <View className="items-center">
               <Text className="text-2xl font-bold text-orange-600">
-                {displayUser.impact.hoursVolunteered}hrs
+                {impact.hoursVolunteered}hrs
               </Text>
               <Text className="text-gray-500 text-sm">Volunteered</Text>
             </View>

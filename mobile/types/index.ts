@@ -27,8 +27,12 @@ export interface Itinerary {
   dates: string;
   budget: string;
   interests: string;
-  days: ItineraryDay[];
   carbonFootprint: number;
+  days: ItineraryDay[];
+  userId?: string;
+  isActive?: boolean;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface ItineraryDay {
@@ -54,22 +58,44 @@ export interface ConservationEvent {
 export interface Badge {
   id: string;
   name: string;
-  icon: string;
-  earned: boolean;
-  color: string;
+  description?: string;
+  emoji?: string;
+  category?: string;
+  rarity?: string;
+  earnedAt?: string;
+}
+
+export interface UserActivity {
+  id: string;
+  activityType: string;
+  pointsEarned: number;
+  eventTitle?: string;
+  accommodationName?: string;
+  restaurantName?: string;
+  itineraryTitle?: string;
+  badgeName?: string;
+  badgeEmoji?: string;
+  createdAt: string;
 }
 
 export interface User {
-  name: string;
+  id: string;
   email: string;
-  location: string;
-  preferences: string[];
-  badges: Badge[];
-  impact: {
-    co2Saved: number;
-    tripsCompleted: number;
-    hoursVolunteered: number;
-  };
+  firstName: string;
+  lastName: string;
+  profileImageUrl?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  budgetRange?: string;
+  ecoInterests?: string[];
+  preferredLanguage?: string;
+  currency?: string;
+  totalEcoPoints: number;
+  ecoLevel: number;
+  isAdmin?: boolean;
+  emailVerified?: boolean;
+  createdAt?: string;
+  lastLoginAt?: string;
 }
 
 // Auth-related types

@@ -1,24 +1,24 @@
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Base API configuration
-const API_BASE_URL = __DEV__ 
-  ? 'http://192.168.1.100:5000/api/v1' // Replace with your computer's IP address
-  : 'https://your-production-api.com/api/v1'; // Update for production
+const API_BASE_URL = __DEV__
+  ? "http://192.168.100.36:5000/api/v1" // Replace with your computer's IP address
+  : "https://your-production-api.com/api/v1"; // Update for production
 
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('accessToken');
+    const token = await AsyncStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -39,21 +39,21 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = await AsyncStorage.getItem('refreshToken');
+        const refreshToken = await AsyncStorage.getItem("refreshToken");
         if (refreshToken) {
           const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
             refreshToken,
           });
 
           const { accessToken } = response.data.data;
-          await AsyncStorage.setItem('accessToken', accessToken);
+          await AsyncStorage.setItem("accessToken", accessToken);
 
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         }
       } catch (refreshError) {
         // Refresh failed, logout user
-        await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
+        await AsyncStorage.multiRemove(["accessToken", "refreshToken", "user"]);
         throw refreshError;
       }
     }
@@ -65,22 +65,22 @@ api.interceptors.response.use(
 // Auth API functions
 export const authAPI = {
   login: async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
+    const response = await api.post("/auth/login", { email, password });
     return response.data;
   },
 
   register: async (userData) => {
-    const response = await api.post('/auth/register', userData);
+    const response = await api.post("/auth/register", userData);
     return response.data;
   },
 
   refreshToken: async (refreshToken) => {
-    const response = await api.post('/auth/refresh', { refreshToken });
+    const response = await api.post("/auth/refresh", { refreshToken });
     return response.data;
   },
 
   logout: async () => {
-    const response = await api.post('/auth/logout');
+    const response = await api.post("/auth/logout");
     return response.data;
   },
 };
@@ -88,12 +88,27 @@ export const authAPI = {
 // User API functions
 export const userAPI = {
   getProfile: async () => {
-    const response = await api.get('/users/profile');
+    const response = await api.get("/users/profile");
     return response.data;
   },
 
   updateProfile: async (userData) => {
-    const response = await api.put('/users/profile', userData);
+    const response = await api.put("/users/profile", userData);
+    return response.data;
+  },
+
+  getUserBadges: async () => {
+    const response = await api.get("/users/profile/badges");
+    return response.data;
+  },
+
+  getUserItineraries: async (params = {}) => {
+    const response = await api.get("/users/profile/itineraries", { params });
+    return response.data;
+  },
+
+  getUserActivities: async (params = {}) => {
+    const response = await api.get("/users/profile/activities", { params });
     return response.data;
   },
 };
