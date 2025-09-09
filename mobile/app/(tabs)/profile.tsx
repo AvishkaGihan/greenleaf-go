@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { Badge, Itinerary, User, UserActivity } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 import { userAPI } from "../../services/api";
@@ -23,6 +24,7 @@ export default function ProfileScreen() {
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -68,9 +70,23 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           try {
+            setLogoutLoading(true);
             await logout();
+            Alert.alert("Success", "You have been logged out successfully.", [
+              {
+                text: "OK",
+                onPress: () => {
+                  router.replace("/sign-in");
+                },
+              },
+            ]);
           } catch (error) {
             console.error("Logout error:", error);
+            Alert.alert("Error", "Failed to logout. Please try again.", [
+              { text: "OK" },
+            ]);
+          } finally {
+            setLogoutLoading(false);
           }
         },
       },
@@ -227,10 +243,17 @@ export default function ProfileScreen() {
               <Text className="text-white font-semibold">Edit Profile</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className="bg-red-500 rounded-full py-2 px-4 items-center flex-1 ml-2"
+              className={`bg-red-500 rounded-full py-2 px-4 items-center flex-1 ml-2 ${
+                logoutLoading ? "opacity-50" : ""
+              }`}
               onPress={handleLogout}
+              disabled={logoutLoading}
             >
-              <Text className="text-white font-semibold">Logout</Text>
+              {logoutLoading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text className="text-white font-semibold">Logout</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
