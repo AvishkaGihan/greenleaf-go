@@ -32,6 +32,7 @@ export interface EcoPlace {
   phone?: string;
   email?: string;
   websiteUrl?: string;
+  bookingUrl?: string;
   checkInTime?: string;
   checkOutTime?: string;
   starRating?: number;

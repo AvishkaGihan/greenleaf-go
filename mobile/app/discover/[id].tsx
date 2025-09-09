@@ -8,6 +8,9 @@ import {
   Share,
   Alert,
   ActivityIndicator,
+  Linking,
+  ActionSheetIOS,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -58,6 +61,7 @@ export default function EcoPlaceDetailScreen() {
           phone: acc.phone,
           email: acc.email,
           websiteUrl: acc.websiteUrl,
+          bookingUrl: acc.bookingUrl,
           checkInTime: acc.checkInTime,
           checkOutTime: acc.checkOutTime,
           starRating: acc.starRating,
@@ -132,6 +136,7 @@ export default function EcoPlaceDetailScreen() {
                   phone: acc.phone,
                   email: acc.email,
                   websiteUrl: acc.websiteUrl,
+                  bookingUrl: acc.bookingUrl,
                   checkInTime: acc.checkInTime,
                   checkOutTime: acc.checkOutTime,
                   starRating: acc.starRating,
@@ -196,9 +201,66 @@ export default function EcoPlaceDetailScreen() {
   };
 
   const handleBookNow = () => {
-    Alert.alert("Book Now", `This would open booking for ${place.name}`, [
-      { text: "OK" },
-    ]);
+    if (place.bookingUrl) {
+      // Open booking URL directly
+      Linking.openURL(place.bookingUrl).catch((err) => {
+        Alert.alert("Error", "Could not open booking page");
+        console.error("Error opening booking URL:", err);
+      });
+    } else {
+      // Show booking options
+      const options: string[] = [];
+      const actions: (() => void)[] = [];
+
+      if (place.phone) {
+        options.push(`📞 Call ${place.phone}`);
+        actions.push(() => Linking.openURL(`tel:${place.phone}`));
+      }
+
+      if (place.email) {
+        options.push(`✉️ Email ${place.email}`);
+        actions.push(() => Linking.openURL(`mailto:${place.email}`));
+      }
+
+      if (place.websiteUrl) {
+        options.push("🌐 Visit Website");
+        actions.push(() => Linking.openURL(place.websiteUrl!));
+      }
+
+      if (options.length === 0) {
+        Alert.alert(
+          "Booking Info Unavailable",
+          "No booking information is available for this accommodation.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+
+      options.push("Cancel");
+
+      if (Platform.OS === "ios") {
+        ActionSheetIOS.showActionSheetWithOptions(
+          {
+            options,
+            cancelButtonIndex: options.length - 1,
+          },
+          (buttonIndex) => {
+            if (buttonIndex < actions.length) {
+              actions[buttonIndex]();
+            }
+          }
+        );
+      } else {
+        // For Android, use Alert with multiple buttons
+        const alertButtons = options.slice(0, -1).map((option, index) => ({
+          text: option,
+          onPress: actions[index],
+        }));
+        alertButtons.push({ text: "Cancel", onPress: () => {} });
+
+        Alert.alert("Book Now", "Choose how you'd like to book:", alertButtons);
+      }
+    }
   };
 
   const renderStars = (rating: number) => {
