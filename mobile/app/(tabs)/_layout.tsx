@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Text } from "react-native";
+import { Text, View } from "react-native";
 
 export default function TabLayout() {
   return (
@@ -27,7 +27,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="plan/index"
+        name="plan"
         options={{
           title: "Plan",
           tabBarIcon: ({ color, size }) => (
@@ -36,12 +36,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="volunteer/index"
+        name="volunteer"
         options={{
           title: "Volunteer",
           tabBarIcon: ({ color, size }) => (
             <View>
-              <Ionicons name="heart" size={size} color={color} />
+              <Ionicons name="people" size={size} color={color} />
               <View className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 items-center justify-center">
                 <Text className="text-white text-xs font-bold">2</Text>
               </View>
@@ -50,7 +50,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile/index"
+        name="profile"
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
