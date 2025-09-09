@@ -5,13 +5,7 @@ import cors from "cors";
 // CORS configuration
 const corsOptions = {
   origin:
-    process.env.NODE_ENV === "production"
-      ? ["https://yourdomain.com"]
-      : [
-          "http://localhost:3000",
-          "http://localhost:3001",
-          "http://localhost:8081",
-        ],
+    process.env.NODE_ENV === "production" ? ["https://yourdomain.com"] : "*",
   credentials: true,
   optionsSuccessStatus: 200,
 };
