@@ -58,11 +58,11 @@ const reviewSchema = new mongoose.Schema(
 // Compound indexes for unique user reviews per venue
 reviewSchema.index(
   { userId: 1, accommodationId: 1 },
-  { unique: true, sparse: true }
+  { unique: true, partialFilterExpression: { accommodationId: { $ne: null } } }
 );
 reviewSchema.index(
   { userId: 1, restaurantId: 1 },
-  { unique: true, sparse: true }
+  { unique: true, partialFilterExpression: { restaurantId: { $ne: null } } }
 );
 
 // Indexes for querying

@@ -1,6 +1,7 @@
 import Review from "../models/Review.js";
 import Accommodation from "../models/Accommodation.js";
 import Restaurant from "../models/Restaurant.js";
+import User from "../models/User.js";
 import UserActivity from "../models/UserActivity.js";
 import { AppError } from "../utils/errorHandler.js";
 
@@ -121,11 +122,15 @@ export const createAccommodationReview = async (req, res, next) => {
       throw new AppError("Accommodation not found", 404, "NOT_FOUND");
     }
 
+    console.log("Request body:", req.body);
+
     // Check if user already reviewed this accommodation
     const existingReview = await Review.findOne({
       userId: req.user._id,
       accommodationId: req.params.id,
     });
+
+    console.log("Existing review:", existingReview);
 
     if (existingReview) {
       throw new AppError(
@@ -135,15 +140,22 @@ export const createAccommodationReview = async (req, res, next) => {
       );
     }
 
+    const { restaurantId, ...body } = req.body;
+
     const reviewData = {
-      ...req.body,
+      ...body,
       userId: req.user._id,
       accommodationId: req.params.id,
       reviewType: "accommodation",
     };
 
+    console.log("Review data to be saved:", reviewData);
+
     const review = new Review(reviewData);
+    console.log("Review instance created:", review);
     await review.save();
+
+    console.log("Review saved successfully:", review);
 
     // Log user activity and award points
     const activity = new UserActivity({
@@ -156,6 +168,7 @@ export const createAccommodationReview = async (req, res, next) => {
         rating: review.rating,
       },
     });
+    console.log("User activity to be saved:", activity);
     await activity.save();
 
     // Update user's total points
@@ -198,8 +211,10 @@ export const createRestaurantReview = async (req, res, next) => {
       );
     }
 
+    const { accommodationId, ...body } = req.body;
+
     const reviewData = {
-      ...req.body,
+      ...body,
       userId: req.user._id,
       restaurantId: req.params.id,
       reviewType: "restaurant",
