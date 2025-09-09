@@ -5,10 +5,12 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge, Itinerary, User } from "../../types";
+import { useAuth } from "../../contexts/AuthContext";
 
 const mockUser: User = {
   name: "Alex Johnson",
@@ -79,6 +81,46 @@ const mockItineraries: Itinerary[] = [
 ];
 
 export default function ProfileScreen() {
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (error) {
+              console.error("Logout error:", error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Use real user data if available, otherwise fall back to mock data
+  const displayUser = user ? {
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email,
+    location: "Your Location", // This could come from user profile
+    preferences: ["Eco-lodges", "Local cuisine", "Outdoor activities"],
+    badges: mockUser.badges,
+    impact: {
+      co2Saved: 12.5,
+      tripsCompleted: 3,
+      hoursVolunteered: 8,
+    },
+  } : mockUser;
+
   const renderBadge = ({ item }: { item: Badge }) => (
     <View
       className={`w-16 h-16 rounded-full items-center justify-center mr-3 mb-3 ${
@@ -121,7 +163,7 @@ export default function ProfileScreen() {
             <Ionicons name="person" size={40} color="white" />
           </View>
           <Text className="text-2xl font-bold text-gray-800">
-            {mockUser.name}
+            {displayUser.name}
           </Text>
           <Text className="text-gray-600">Eco-Traveler since 2023</Text>
         </View>
@@ -133,23 +175,31 @@ export default function ProfileScreen() {
           </Text>
           <View className="mb-3">
             <Text className="text-gray-600">
-              <Text className="font-semibold">Name:</Text> {mockUser.name}
+              <Text className="font-semibold">Name:</Text> {displayUser.name}
             </Text>
             <Text className="text-gray-600">
-              <Text className="font-semibold">Email:</Text> {mockUser.email}
+              <Text className="font-semibold">Email:</Text> {displayUser.email}
             </Text>
             <Text className="text-gray-600">
               <Text className="font-semibold">Location:</Text>{" "}
-              {mockUser.location}
+              {displayUser.location}
             </Text>
             <Text className="text-gray-600">
               <Text className="font-semibold">Travel Preferences:</Text>{" "}
-              {mockUser.preferences.join(", ")}
+              {displayUser.preferences.join(", ")}
             </Text>
           </View>
-          <TouchableOpacity className="bg-primary rounded-full py-2 items-center">
-            <Text className="text-white font-semibold">Edit Profile</Text>
-          </TouchableOpacity>
+          <View className="flex-row justify-between">
+            <TouchableOpacity className="bg-primary rounded-full py-2 px-4 items-center flex-1 mr-2">
+              <Text className="text-white font-semibold">Edit Profile</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              className="bg-red-500 rounded-full py-2 px-4 items-center flex-1 ml-2"
+              onPress={handleLogout}
+            >
+              <Text className="text-white font-semibold">Logout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Saved Itineraries */}
@@ -171,7 +221,7 @@ export default function ProfileScreen() {
             <Ionicons name="medal" size={20} /> Earned Eco-Badges
           </Text>
           <FlatList
-            data={mockUser.badges}
+            data={displayUser.badges}
             renderItem={renderBadge}
             keyExtractor={(item) => item.id}
             numColumns={3}
@@ -191,19 +241,19 @@ export default function ProfileScreen() {
           <View className="flex-row justify-around">
             <View className="items-center">
               <Text className="text-2xl font-bold text-green-600">
-                {mockUser.impact.co2Saved}kg
+                {displayUser.impact.co2Saved}kg
               </Text>
               <Text className="text-gray-500 text-sm">CO₂ Saved</Text>
             </View>
             <View className="items-center">
               <Text className="text-2xl font-bold text-blue-600">
-                {mockUser.impact.tripsCompleted}
+                {displayUser.impact.tripsCompleted}
               </Text>
               <Text className="text-gray-500 text-sm">Trips Completed</Text>
             </View>
             <View className="items-center">
               <Text className="text-2xl font-bold text-orange-600">
-                {mockUser.impact.hoursVolunteered}hrs
+                {displayUser.impact.hoursVolunteered}hrs
               </Text>
               <Text className="text-gray-500 text-sm">Volunteered</Text>
             </View>

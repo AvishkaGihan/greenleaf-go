@@ -71,3 +71,37 @@ export interface User {
     hoursVolunteered: number;
   };
 }
+
+// Auth-related types
+export interface AuthUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  profileImageUrl?: string;
+  ecoLevel: number;
+  totalEcoPoints: number;
+  isAdmin?: boolean;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  dateOfBirth?: string;
+  preferredLanguage?: string;
+  currency?: string;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}

@@ -7,23 +7,31 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState("demo@greenleafgo.com");
-  const [password, setPassword] = useState("••••••••");
-  const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const { login, isLoading } = useAuth();
 
   const handleSignIn = async () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    try {
+      await login(email, password);
       router.replace("/(tabs)/discover");
-    }, 1500);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error?.message || "Login failed";
+      Alert.alert("Login Failed", errorMessage);
+    }
   };
 
   const handleSkipToDemo = () => {
@@ -79,13 +87,13 @@ export default function SignInScreen() {
 
             <TouchableOpacity
               className={`bg-primary rounded-full py-3 items-center mb-4 ${
-                loading ? "opacity-50" : ""
+                isLoading ? "opacity-50" : ""
               }`}
               onPress={handleSignIn}
-              disabled={loading}
+              disabled={isLoading}
             >
               <Text className="text-white font-semibold text-lg">
-                {loading ? "Signing In..." : "Sign In"}
+                {isLoading ? "Signing In..." : "Sign In"}
               </Text>
             </TouchableOpacity>
 
