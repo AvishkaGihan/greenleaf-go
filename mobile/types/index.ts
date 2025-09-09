@@ -1,7 +1,7 @@
 export interface EcoPlace {
   id: string;
   name: string;
-  type: "hotel" | "restaurant";
+  type: string; // Updated to string to match API types (hotel, hostel, resort, etc.)
   rating: number;
   address: string;
   price: string;

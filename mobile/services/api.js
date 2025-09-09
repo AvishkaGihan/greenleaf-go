@@ -113,4 +113,12 @@ export const userAPI = {
   },
 };
 
+// Accommodation API functions
+export const accommodationAPI = {
+  getAccommodations: async (params = {}) => {
+    const response = await api.get("/accommodations", { params });
+    return response.data;
+  },
+};
+
 export default api;

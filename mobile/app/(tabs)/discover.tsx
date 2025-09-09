@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,48 +6,13 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { EcoPlace } from "../../types";
-
-const mockEcoPlaces: EcoPlace[] = [
-  {
-    id: "1",
-    name: "Green Haven Hotel",
-    type: "hotel",
-    rating: 5,
-    address: "123 Eco Street, Portland",
-    price: "$120-180/night",
-    description:
-      "A LEED-certified hotel committed to environmental sustainability.",
-    sustainability: { energy: 90, waste: 85, water: 95 },
-    reviews: [],
-  },
-  {
-    id: "2",
-    name: "Organic Bites Cafe",
-    type: "restaurant",
-    rating: 4,
-    address: "456 Green Ave, Portland",
-    price: "$$",
-    description: "Farm-to-table restaurant with organic ingredients.",
-    sustainability: { energy: 80, waste: 90, water: 85 },
-    reviews: [],
-  },
-  {
-    id: "3",
-    name: "EcoLodge Retreat",
-    type: "hotel",
-    rating: 3,
-    address: "789 Nature Rd, Portland",
-    price: "$80-120/night",
-    description: "Rustic eco-lodge in natural setting.",
-    sustainability: { energy: 75, waste: 80, water: 70 },
-    reviews: [],
-  },
-];
+import { accommodationAPI } from "../../services/api";
 
 export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,6 +22,42 @@ export default function DiscoverScreen() {
     "Portland",
     "4+ Leaves",
   ]);
+  const [ecoPlaces, setEcoPlaces] = useState<EcoPlace[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPlaces = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await accommodationAPI.getAccommodations();
+        const places: EcoPlace[] = response.data.accommodations.map(
+          (acc: any) => ({
+            id: acc._id,
+            name: acc.name,
+            type: acc.type,
+            rating: acc.ecoRating || 0,
+            address: acc.address,
+            price: acc.priceRange,
+            description: acc.description || "",
+            sustainability: {
+              energy: acc.energyEfficiencyScore || 0,
+              waste: acc.wasteManagementScore || 0,
+              water: acc.waterConservationScore || 0,
+            },
+            reviews: [],
+          })
+        );
+        setEcoPlaces(places);
+      } catch (err) {
+        setError("Failed to load places. Try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlaces();
+  }, []);
 
   const renderEcoPlace = ({ item }: { item: EcoPlace }) => (
     <TouchableOpacity
@@ -119,12 +120,65 @@ export default function DiscoverScreen() {
           ))}
         </ScrollView>
 
-        <FlatList
-          data={mockEcoPlaces}
-          renderItem={renderEcoPlace}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-        />
+        {loading ? (
+          <View className="flex-1 justify-center items-center">
+            <ActivityIndicator size="large" color="#27ae60" />
+            <Text className="mt-2 text-gray-600">Loading places...</Text>
+          </View>
+        ) : error ? (
+          <View className="flex-1 justify-center items-center">
+            <Text className="text-red-500 text-center">{error}</Text>
+            <TouchableOpacity
+              className="mt-4 bg-primary px-4 py-2 rounded-full"
+              onPress={() => {
+                setError(null);
+                setLoading(true);
+                // Refetch
+                const fetchPlaces = async () => {
+                  try {
+                    const response = await accommodationAPI.getAccommodations();
+                    const places: EcoPlace[] = response.data.accommodations.map(
+                      (acc: any) => ({
+                        id: acc._id,
+                        name: acc.name,
+                        type: acc.type,
+                        rating: acc.ecoRating || 0,
+                        address: acc.address,
+                        price: acc.priceRange,
+                        description: acc.description || "",
+                        sustainability: {
+                          energy: acc.energyEfficiencyScore || 0,
+                          waste: acc.wasteManagementScore || 0,
+                          water: acc.waterConservationScore || 0,
+                        },
+                        reviews: [],
+                      })
+                    );
+                    setEcoPlaces(places);
+                  } catch (err) {
+                    setError("Failed to load places. Try again.");
+                  } finally {
+                    setLoading(false);
+                  }
+                };
+                fetchPlaces();
+              }}
+            >
+              <Text className="text-white font-semibold">Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : ecoPlaces.length === 0 ? (
+          <View className="flex-1 justify-center items-center">
+            <Text className="text-gray-600">No places found.</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={ecoPlaces}
+            renderItem={renderEcoPlace}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
