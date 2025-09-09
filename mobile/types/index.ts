@@ -137,16 +137,78 @@ export interface CreateItineraryRequest {
 
 export interface ConservationEvent {
   id: string;
+  _id?: string;
   title: string;
-  type: "cleanup" | "restoration" | "planting";
-  date: string;
-  time: string;
-  location: string;
   description: string;
-  organizer: string;
-  difficulty: "easy" | "moderate" | "hard";
-  volunteersNeeded: number;
-  spotsLeft: number;
+  shortDescription?: string;
+  eventType:
+    | "beach-cleanup"
+    | "tree-planting"
+    | "wildlife-monitoring"
+    | "education"
+    | "research"
+    | "restoration";
+  difficultyLevel: "easy" | "moderate" | "challenging";
+  ageRequirement?: number;
+  physicalRequirements?: string;
+
+  // Location
+  address: string;
+  city: string;
+  stateProvince?: string;
+  country: string;
+  locationCoords?: {
+    type: "Point";
+    coordinates: [number, number]; // [longitude, latitude]
+  };
+  distance?: number; // Calculated distance from user
+
+  // Timing
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  durationHours: number;
+
+  // Capacity
+  maxParticipants: number;
+  currentParticipants?: number;
+  minParticipants?: number;
+  availableSpots?: number;
+
+  // Requirements
+  equipmentProvided?: string[];
+  whatToBring?: string[];
+
+  // Organization
+  organizerName: string;
+  organizerContact?: string;
+  organizerWebsite?: string;
+
+  // Gamification
+  ecoPointsReward?: number;
+
+  // Media
+  imageUrls?: string[];
+
+  // User-specific data
+  userRsvpStatus?:
+    | "registered"
+    | "waitlisted"
+    | "attended"
+    | "no-show"
+    | "cancelled"
+    | null;
+
+  // Legacy support for existing mock data
+  type?: "cleanup" | "restoration" | "planting";
+  date?: string;
+  time?: string;
+  location?: string;
+  organizer?: string;
+  difficulty?: "easy" | "moderate" | "hard";
+  volunteersNeeded?: number;
+  spotsLeft?: number;
   isRegistered?: boolean;
 }
 

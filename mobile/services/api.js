@@ -205,4 +205,34 @@ export const itineraryAPI = {
   },
 };
 
+// Event API functions
+export const eventAPI = {
+  getEvents: async (params = {}) => {
+    const response = await api.get("/events", { params });
+    return response.data;
+  },
+
+  getEvent: async (id) => {
+    const response = await api.get(`/events/${id}`);
+    return response.data;
+  },
+
+  rsvpEvent: async (eventId, rsvpData) => {
+    const response = await api.post(`/events/${eventId}/rsvp`, rsvpData);
+    return response.data;
+  },
+
+  cancelRsvp: async (eventId) => {
+    const response = await api.delete(`/events/${eventId}/rsvp`);
+    return response.data;
+  },
+
+  checkInEvent: async (eventId, confirmationCode) => {
+    const response = await api.post(`/events/${eventId}/check-in`, {
+      confirmation_code: confirmationCode,
+    });
+    return response.data;
+  },
+};
+
 export default api;
