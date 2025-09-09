@@ -159,9 +159,18 @@ export default function ProfileScreen() {
 
   const renderItinerary = ({ item }: { item: Itinerary }) => (
     <View className="bg-gray-50 p-4 rounded-lg mb-3 border-l-4 border-primary">
-      <Text className="font-semibold text-gray-800">{item.destination}</Text>
-      <Text className="text-gray-600 text-sm">{item.dates}</Text>
-      <Text className="text-gray-600 text-sm">{item.budget}</Text>
+      <Text className="font-semibold text-gray-800">
+        {item.title || `${item.destinationCity}, ${item.destinationCountry}`}
+      </Text>
+      <Text className="text-gray-600 text-sm">
+        {new Date(item.startDate).toLocaleDateString()} -{" "}
+        {new Date(item.endDate).toLocaleDateString()}
+      </Text>
+      <Text className="text-gray-600 text-sm">
+        {item.budgetTotal && item.budgetCurrency
+          ? `${item.budgetCurrency} ${item.budgetTotal}`
+          : "Budget not set"}
+      </Text>
       <Text className="text-green-600 text-sm mt-1">
         ✅ Saved • Ready to book
       </Text>

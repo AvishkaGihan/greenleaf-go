@@ -126,4 +126,69 @@ export const accommodationAPI = {
   },
 };
 
+// Itinerary API functions
+export const itineraryAPI = {
+  getItineraries: async (params = {}) => {
+    const response = await api.get("/itineraries", { params });
+    return response.data;
+  },
+
+  getItinerary: async (id) => {
+    const response = await api.get(`/itineraries/${id}`);
+    return response.data;
+  },
+
+  createItinerary: async (itineraryData) => {
+    const response = await api.post("/itineraries", itineraryData);
+    return response.data;
+  },
+
+  generateItinerary: async (generationData) => {
+    const response = await api.post("/itineraries/generate", generationData);
+    return response.data;
+  },
+
+  saveGeneratedItinerary: async (generationId, itineraryData) => {
+    const response = await api.post(
+      `/itineraries/generate/${generationId}/save`,
+      itineraryData
+    );
+    return response.data;
+  },
+
+  updateItinerary: async (id, itineraryData) => {
+    const response = await api.put(`/itineraries/${id}`, itineraryData);
+    return response.data;
+  },
+
+  deleteItinerary: async (id) => {
+    const response = await api.delete(`/itineraries/${id}`);
+    return response.data;
+  },
+
+  // Itinerary items
+  addItineraryItem: async (itineraryId, itemData) => {
+    const response = await api.post(
+      `/itineraries/${itineraryId}/items`,
+      itemData
+    );
+    return response.data;
+  },
+
+  updateItineraryItem: async (itineraryId, itemId, itemData) => {
+    const response = await api.put(
+      `/itineraries/${itineraryId}/items/${itemId}`,
+      itemData
+    );
+    return response.data;
+  },
+
+  deleteItineraryItem: async (itineraryId, itemId) => {
+    const response = await api.delete(
+      `/itineraries/${itineraryId}/items/${itemId}`
+    );
+    return response.data;
+  },
+};
+
 export default api;

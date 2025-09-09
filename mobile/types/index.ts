@@ -35,21 +35,93 @@ export interface Review {
 
 export interface Itinerary {
   id: string;
-  destination: string;
-  dates: string;
-  budget: string;
-  interests: string;
-  carbonFootprint: number;
-  days: ItineraryDay[];
-  userId?: string;
+  title: string;
+  description?: string;
+  destinationCity: string;
+  destinationCountry: string;
+  startDate: string;
+  endDate: string;
+  budgetTotal?: number;
+  budgetCurrency?: string;
+  travelStyle: "budget" | "mid-range" | "luxury";
+  interests?: string[];
+  groupSize?: number;
+  isAiGenerated?: boolean;
+  ecoScore?: number;
+  estimatedCarbonFootprint?: number;
+  isPublic?: boolean;
+  isFavorite?: boolean;
   isActive?: boolean;
-  startDate?: string;
-  endDate?: string;
+  userId?: string;
+  items?: ItineraryItem[];
+  summary?: ItinerarySummary;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface ItineraryDay {
-  day: number;
-  activities: string[];
+export interface ItineraryItem {
+  id: string;
+  itineraryId: string;
+  dayNumber: number;
+  startTime?: string;
+  endTime?: string;
+  title: string;
+  description?: string;
+  notes?: string;
+  address?: string;
+  itemType: "accommodation" | "restaurant" | "activity" | "transport" | "event";
+  accommodationId?: string;
+  restaurantId?: string;
+  conservationEventId?: string;
+  estimatedCost?: number;
+  actualCost?: number;
+  currency?: string;
+  sortOrder?: number;
+}
+
+export interface ItinerarySummary {
+  totalDays: number;
+  totalItems: number;
+  totalEstimatedCost: number;
+  accommodations: number;
+  restaurants: number;
+  activities: number;
+  events: number;
+}
+
+// Form data interfaces
+export interface GenerateItineraryRequest {
+  destinationCity: string;
+  destinationCountry: string;
+  startDate: string;
+  endDate: string;
+  budgetTotal?: number;
+  budgetCurrency?: string;
+  travelStyle: "budget" | "mid-range" | "luxury";
+  interests?: string[];
+  groupSize?: number;
+  accommodationPreference?:
+    | "hotel"
+    | "hostel"
+    | "resort"
+    | "guesthouse"
+    | "apartment"
+    | "eco-lodge";
+  includeVolunteerActivities?: boolean;
+}
+
+export interface CreateItineraryRequest {
+  title: string;
+  description?: string;
+  destinationCity: string;
+  destinationCountry: string;
+  startDate: string;
+  endDate: string;
+  budgetTotal?: number;
+  budgetCurrency?: string;
+  travelStyle: "budget" | "mid-range" | "luxury";
+  interests?: string[];
+  groupSize?: number;
 }
 
 export interface ConservationEvent {
