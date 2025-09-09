@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   Share,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -14,69 +15,112 @@ import { Ionicons } from "@expo/vector-icons";
 import { EcoPlace } from "../../types";
 import EcoRating from "../../components/EcoRating";
 import BackButton from "../../components/BackButton";
-
-const mockEcoPlaces: EcoPlace[] = [
-  {
-    id: "1",
-    name: "Green Haven Hotel",
-    type: "hotel",
-    rating: 5,
-    address: "123 Eco Street, Portland, OR",
-    price: "$120-180/night",
-    description:
-      "A LEED-certified hotel committed to environmental sustainability. Features solar panels, rainwater harvesting, and organic gardens.",
-    sustainability: { energy: 90, waste: 85, water: 95 },
-    reviews: [
-      {
-        id: "1",
-        author: "Sarah M.",
-        rating: 5,
-        comment:
-          "Amazing eco-friendly hotel! Solar-powered rooms and fantastic recycling program.",
-      },
-      {
-        id: "2",
-        author: "Mike T.",
-        rating: 5,
-        comment:
-          "Great location and really impressed by their sustainability efforts. Will stay again!",
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Organic Bites Cafe",
-    type: "restaurant",
-    rating: 4,
-    address: "456 Green Ave, Portland, OR",
-    price: "$$",
-    description:
-      "Farm-to-table restaurant with organic ingredients and zero-waste kitchen.",
-    sustainability: { energy: 80, waste: 90, water: 85 },
-    reviews: [
-      {
-        id: "1",
-        author: "Lisa K.",
-        rating: 4,
-        comment:
-          "Delicious organic food and great commitment to sustainability!",
-      },
-      {
-        id: "2",
-        author: "John D.",
-        rating: 5,
-        comment: "Love their zero-waste approach. Food is amazing!",
-      },
-    ],
-  },
-];
+import { accommodationAPI } from "../../services/api";
 
 export default function EcoPlaceDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const [place, setPlace] = useState<EcoPlace | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
 
-  const place = mockEcoPlaces.find((p) => p.id === id);
+  useEffect(() => {
+    const fetchPlace = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await accommodationAPI.getAccommodation(id);
+        const acc = response.data;
+
+        // Map API response to EcoPlace interface
+        const mappedPlace: EcoPlace = {
+          id: acc._id,
+          name: acc.name,
+          type: acc.type,
+          rating: acc.ecoRating || 0,
+          address: acc.address,
+          price: acc.priceRange,
+          description: acc.description || "",
+          sustainability: {
+            energy: (acc.energyEfficiencyScore || 0) * 20,
+            waste: (acc.wasteManagementScore || 0) * 20,
+            water: (acc.waterConservationScore || 0) * 20,
+          },
+          reviews: [], // Reviews will be handled separately if needed
+          reviewsSummary: acc.reviewsSummary,
+          nearbyAttractions: acc.nearbyAttractions,
+        };
+
+        setPlace(mappedPlace);
+      } catch (err) {
+        setError("Failed to load place details. Please try again.");
+        console.error("Error fetching place:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchPlace();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color="#27ae60" />
+        <Text className="mt-2 text-gray-600">Loading place details...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center">
+        <Text className="text-gray-600 mb-4">{error}</Text>
+        <TouchableOpacity
+          className="bg-primary rounded-full py-3 px-6"
+          onPress={() => {
+            setError(null);
+            setLoading(true);
+            // Re-fetch data
+            const fetchPlace = async () => {
+              try {
+                const response = await accommodationAPI.getAccommodation(id);
+                const acc = response.data;
+                const mappedPlace: EcoPlace = {
+                  id: acc._id,
+                  name: acc.name,
+                  type: acc.type,
+                  rating: acc.ecoRating || 0,
+                  address: acc.address,
+                  price: acc.priceRange,
+                  description: acc.description || "",
+                  sustainability: {
+                    energy: (acc.energyEfficiencyScore || 0) * 20,
+                    waste: (acc.wasteManagementScore || 0) * 20,
+                    water: (acc.waterConservationScore || 0) * 20,
+                  },
+                  reviews: [],
+                  reviewsSummary: acc.reviewsSummary,
+                  nearbyAttractions: acc.nearbyAttractions,
+                };
+                setPlace(mappedPlace);
+              } catch (err) {
+                setError("Failed to load place details. Please try again.");
+              } finally {
+                setLoading(false);
+              }
+            };
+            fetchPlace();
+          }}
+        >
+          <Text className="text-white font-semibold">Retry</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   if (!place) {
     return (
@@ -213,23 +257,60 @@ export default function EcoPlaceDetailScreen() {
             <Text className="text-lg font-semibold text-gray-800 mb-3">
               Reviews
             </Text>
-            {place.reviews.map((review) => (
-              <View
-                key={review.id}
-                className="bg-gray-50 p-3 rounded-lg mb-3 last:mb-0"
-              >
-                <View className="flex-row justify-between items-center mb-2">
-                  <Text className="font-semibold text-gray-800">
-                    {review.author}
+            {place.reviewsSummary ? (
+              <View>
+                <View className="flex-row items-center mb-3">
+                  <View className="flex-row mr-3">
+                    {renderStars(
+                      Math.round(place.reviewsSummary.averageRating)
+                    )}
+                  </View>
+                  <Text className="text-lg font-semibold text-gray-800">
+                    {place.reviewsSummary.averageRating.toFixed(1)}
                   </Text>
-                  <View className="flex-row">{renderStars(review.rating)}</View>
+                  <Text className="text-gray-600 ml-2">
+                    ({place.reviewsSummary.totalReviews} reviews)
+                  </Text>
                 </View>
-                <Text className="text-gray-700 text-sm">
-                  "{review.comment}"
+                <Text className="text-gray-700">
+                  Average Eco Rating:{" "}
+                  {place.reviewsSummary.averageEcoRating.toFixed(1)}/5
                 </Text>
               </View>
-            ))}
+            ) : (
+              <Text className="text-gray-600">No reviews yet</Text>
+            )}
           </View>
+
+          {/* Nearby Attractions */}
+          {place.nearbyAttractions && place.nearbyAttractions.length > 0 && (
+            <View className="bg-white rounded-xl p-4 shadow-sm mb-4">
+              <Text className="text-lg font-semibold text-gray-800 mb-3">
+                Nearby Attractions
+              </Text>
+              {place.nearbyAttractions.map((attraction, index) => (
+                <View
+                  key={index}
+                  className="flex-row items-center py-2 border-b border-gray-100 last:border-b-0"
+                >
+                  <Ionicons
+                    name={
+                      attraction.type === "hotel" ? "business" : "restaurant"
+                    }
+                    size={20}
+                    color="#888"
+                    className="mr-3"
+                  />
+                  <Text className="text-gray-700 flex-1">
+                    {attraction.name}
+                  </Text>
+                  <Text className="text-gray-500 text-sm capitalize">
+                    {attraction.type}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
 
           {savedConfirmation && (
             <View className="bg-green-100 border border-green-400 rounded-xl p-4 mb-4">

@@ -12,6 +12,18 @@ export interface EcoPlace {
     water: number;
   };
   reviews: Review[];
+  // Additional fields for detailed view
+  reviewsSummary?: {
+    averageRating: number;
+    totalReviews: number;
+    averageEcoRating: number;
+    ratingDistribution: { [key: number]: number };
+  };
+  nearbyAttractions?: Array<{
+    name: string;
+    type: string;
+    distance: number | null;
+  }>;
 }
 
 export interface Review {

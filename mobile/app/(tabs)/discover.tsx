@@ -42,9 +42,9 @@ export default function DiscoverScreen() {
             price: acc.priceRange,
             description: acc.description || "",
             sustainability: {
-              energy: acc.energyEfficiencyScore || 0,
-              waste: acc.wasteManagementScore || 0,
-              water: acc.waterConservationScore || 0,
+              energy: (acc.energyEfficiencyScore || 0) * 20,
+              waste: (acc.wasteManagementScore || 0) * 20,
+              water: (acc.waterConservationScore || 0) * 20,
             },
             reviews: [],
           })

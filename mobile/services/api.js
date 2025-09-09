@@ -119,6 +119,11 @@ export const accommodationAPI = {
     const response = await api.get("/accommodations", { params });
     return response.data;
   },
+
+  getAccommodation: async (id) => {
+    const response = await api.get(`/accommodations/${id}`);
+    return response.data;
+  },
 };
 
 export default api;
