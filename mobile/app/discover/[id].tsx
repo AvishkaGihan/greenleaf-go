@@ -21,6 +21,7 @@ import EcoRating from "../../components/EcoRating";
 import ReviewsList from "../../components/ReviewsList";
 import WriteReviewModal from "../../components/WriteReviewModal";
 import AddToItineraryModal from "../../components/AddToItineraryModal";
+import ImageViewer from "../../components/ImageViewer";
 import { accommodationAPI, reviewAPI } from "../../services/api";
 
 export default function EcoPlaceDetailScreen() {
@@ -37,6 +38,8 @@ export default function EcoPlaceDetailScreen() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [showWriteReview, setShowWriteReview] = useState(false);
   const [showAddToItinerary, setShowAddToItinerary] = useState(false);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<"overview" | "reviews">(
     "overview"
   );
@@ -384,7 +387,16 @@ export default function EcoPlaceDetailScreen() {
             </View>
 
             {/* Hero Image Section */}
-            <View className="h-64 relative">
+            <TouchableOpacity
+              className="h-64 relative"
+              onPress={() => {
+                if (place.imageUrl && !imageError && place.imageUrls) {
+                  setSelectedImageIndex(0);
+                  setShowImageViewer(true);
+                }
+              }}
+              disabled={!place.imageUrl || imageError || !place.imageUrls}
+            >
               {place.imageUrl && !imageError ? (
                 <>
                   <Image
@@ -395,6 +407,17 @@ export default function EcoPlaceDetailScreen() {
                   />
                   {/* Overlay for text readability */}
                   <View className="absolute inset-0 bg-black/30" />
+                  {/* Image indicator - only show if there are multiple images */}
+                  {place.imageUrls && place.imageUrls.length > 1 && (
+                    <View className="absolute top-4 right-4">
+                      <View className="bg-black/50 rounded-full px-3 py-1 flex-row items-center">
+                        <Ionicons name="images" size={14} color="white" />
+                        <Text className="text-white text-xs ml-1 font-medium">
+                          {place.imageUrls.length}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                   <View className="absolute bottom-6 left-6 right-6">
                     <Text className="text-white text-2xl font-bold text-center mb-2">
                       {place.name}
@@ -426,7 +449,7 @@ export default function EcoPlaceDetailScreen() {
                   )}
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
 
             {/* Main Content */}
             <View className="px-6 -mt-6">
@@ -576,13 +599,8 @@ export default function EcoPlaceDetailScreen() {
                               index < place.imageUrls!.length - 1 ? "mr-3" : ""
                             }`}
                             onPress={() => {
-                              // Could implement full-screen image viewer here
-                              Alert.alert(
-                                "Photo",
-                                `Viewing photo ${index + 1} of ${
-                                  place.imageUrls!.length
-                                }`
-                              );
+                              setSelectedImageIndex(index);
+                              setShowImageViewer(true);
                             }}
                           >
                             <Image
@@ -949,6 +967,16 @@ export default function EcoPlaceDetailScreen() {
           accommodationName={place.name}
           accommodationAddress={place.address}
           priceRange={place.price}
+        />
+      )}
+
+      {/* Image Viewer Modal */}
+      {place && place.imageUrls && place.imageUrls.length > 0 && (
+        <ImageViewer
+          visible={showImageViewer}
+          images={place.imageUrls}
+          initialIndex={selectedImageIndex}
+          onClose={() => setShowImageViewer(false)}
         />
       )}
     </SafeAreaView>
