@@ -151,6 +151,7 @@ export const generateItinerary = async (req, res, next) => {
       start_date: startDate,
       end_date: endDate,
       budget_total: budgetTotal,
+      budgetCurrency: budgetCurrency || "USD",
       travel_style: travelStyle,
       interests,
       group_size: groupSize,
@@ -177,44 +178,68 @@ export const generateItinerary = async (req, res, next) => {
 
 export const saveGeneratedItinerary = async (req, res, next) => {
   try {
-    const { suggestion_index, title, make_favorite } = req.body;
+    const { suggestion, title, make_favorite } = req.body;
     const { generation_id } = req.params;
 
-    // In a real implementation, you would retrieve the generated suggestion from cache/db
-    // This is a simplified version
-    const generatedItinerary = {
-      title: title || `Generated Itinerary for ${generation_id}`,
-      destination_city: "Generated City",
-      destination_country: "Generated Country",
-      eco_score: 4.2,
-      estimated_carbon_footprint: 25.5,
-      total_cost: 1200,
-      highlights: [
-        "Eco-friendly accommodations",
-        "Local experiences",
-        "Sustainable dining",
-      ],
+    // Use the provided suggestion data
+    const itineraryData = {
+      userId: req.user._id,
+      title: title || suggestion.title,
+      description: suggestion.description,
+      destinationCity: req.body.destinationCity || "Unknown", // Need to pass these
+      destinationCountry: req.body.destinationCountry || "Unknown",
+      startDate: req.body.startDate || new Date(),
+      endDate:
+        req.body.endDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      budgetTotal: suggestion.totalCost,
+      budgetCurrency: req.body.budgetCurrency || "USD",
+      travelStyle: req.body.travelStyle || "mid-range",
+      interests: req.body.interests || [],
+      groupSize: req.body.groupSize || 1,
+      ecoScore: suggestion.ecoScore,
+      estimatedCarbonFootprint: suggestion.estimatedCarbonFootprint,
+      isAiGenerated: true,
+      isFavorite: make_favorite || false,
     };
 
-    const itinerary = new Itinerary({
-      userId: req.user._id,
-      title: generatedItinerary.title,
-      description: "AI-generated sustainable itinerary",
-      destination_city: generatedItinerary.destination_city,
-      destination_country: generatedItinerary.destination_country,
-      start_date: new Date(),
-      end_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      budget_total: generatedItinerary.total_cost,
-      budget_currency: "USD",
-      travel_style: "mid-range",
-      interests: ["nature", "culture"],
-      eco_score: generatedItinerary.eco_score,
-      estimated_carbon_footprint: generatedItinerary.estimated_carbon_footprint,
-      is_ai_generated: true,
-      is_favorite: make_favorite || false,
+    const itinerary = new Itinerary(itineraryData);
+    await itinerary.save();
+
+    // Create itinerary items from the suggestion days
+    const items = [];
+    suggestion.days.forEach((day) => {
+      day.activities.forEach((activity, index) => {
+        items.push({
+          itineraryId: itinerary._id,
+          dayNumber: day.dayNumber,
+          title: activity.title,
+          description: activity.description,
+          itemType: activity.itemType,
+          estimatedCost: activity.estimatedCost,
+          startTime: activity.startTime,
+          endTime: activity.endTime,
+          address: activity.address,
+          sortOrder: index,
+        });
+      });
     });
 
-    await itinerary.save();
+    await ItineraryItem.insertMany(items);
+
+    // Log user activity
+    const activity = new UserActivity({
+      userId: req.user._id,
+      activityType: "itinerary_created",
+      pointsEarned: 50,
+      itineraryId: itinerary._id,
+      metadata: { itineraryTitle: itinerary.title },
+    });
+    await activity.save();
+
+    // Update user's total points
+    await User.findByIdAndUpdate(req.user._id, {
+      $inc: { totalEcoPoints: 50 },
+    });
 
     res.json({
       success: true,
