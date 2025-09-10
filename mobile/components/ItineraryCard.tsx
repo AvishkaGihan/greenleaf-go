@@ -6,17 +6,11 @@ import { Itinerary, ItineraryItem } from "../types";
 // AI Suggestion format from the API
 interface AISuggestion {
   title: string;
-  destination_city: string;
-  destination_country: string;
-  eco_score: number;
-  estimated_carbon_footprint: number;
-  total_cost: number;
-  highlights: string[];
-  travel_style: string;
-  interests: string[];
-  group_size: number;
-  accommodation_preference: string;
-  include_volunteer_activities: boolean;
+  description: string;
+  ecoScore: number;
+  estimatedCarbonFootprint: number;
+  totalCost: number;
+  days: any[];
 }
 
 interface ItineraryCardProps {
@@ -53,12 +47,9 @@ const renderAISuggestion = (
         <Text className="text-xl font-bold text-gray-800 mb-2">
           ✨ {suggestion.title}
         </Text>
-        <View className="flex-row items-center mb-3">
-          <Ionicons name="location" size={16} color="#9CA3AF" />
-          <Text className="text-gray-600 ml-1 font-medium">
-            {suggestion.destination_city}, {suggestion.destination_country}
-          </Text>
-        </View>
+        <Text className="text-gray-600 text-sm mb-3">
+          {suggestion.description}
+        </Text>
       </View>
 
       {/* Eco Metrics */}
@@ -66,11 +57,11 @@ const renderAISuggestion = (
         <View className="items-center flex-1">
           <Text
             className={`text-2xl font-bold ${getEcoScoreColor(
-              suggestion.eco_score
+              suggestion.ecoScore || 0
             )}`}
           >
-            {getEcoScoreEmoji(suggestion.eco_score)}{" "}
-            {suggestion.eco_score.toFixed(1)}
+            {getEcoScoreEmoji(suggestion.ecoScore || 0)}{" "}
+            {suggestion.ecoScore?.toFixed(1) || "N/A"}
           </Text>
           <Text className="text-gray-600 text-xs text-center mt-1">
             Eco Score
@@ -81,7 +72,7 @@ const renderAISuggestion = (
 
         <View className="items-center flex-1">
           <Text className="text-2xl font-bold text-blue-600">
-            🌍 {suggestion.estimated_carbon_footprint.toFixed(1)}
+            🌍 {suggestion.estimatedCarbonFootprint?.toFixed(1) || "N/A"}
           </Text>
           <Text className="text-gray-600 text-xs text-center mt-1">kg CO₂</Text>
         </View>
@@ -90,7 +81,7 @@ const renderAISuggestion = (
 
         <View className="items-center flex-1">
           <Text className="text-2xl font-bold text-primary">
-            💰 ${suggestion.total_cost}
+            💰 ${suggestion.totalCost || "N/A"}
           </Text>
           <Text className="text-gray-600 text-xs text-center mt-1">
             Total Cost
@@ -98,54 +89,15 @@ const renderAISuggestion = (
         </View>
       </View>
 
-      {/* Highlights */}
+      {/* Itinerary Overview */}
       <View className="mb-6">
         <Text className="text-lg font-semibold text-gray-800 mb-3">
-          🎯 Highlights
+          📅 Itinerary Overview
         </Text>
-        {suggestion.highlights.map((highlight, index) => (
-          <View key={index} className="flex-row items-start mb-2">
-            <View className="w-2 h-2 bg-primary rounded-full mt-2 mr-3" />
-            <Text className="text-gray-700 text-base flex-1 leading-relaxed">
-              {highlight}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Trip Details */}
-      <View className="mb-6 bg-gray-50 rounded-2xl p-4">
-        <Text className="text-base font-semibold text-gray-800 mb-3">
-          📋 Trip Details
+        <Text className="text-gray-700 text-base">
+          {suggestion.days.length} days of eco-friendly activities, dining, and
+          accommodations
         </Text>
-        <View className="space-y-2">
-          <View className="flex-row justify-between">
-            <Text className="text-gray-600">Travel Style:</Text>
-            <Text className="text-gray-800 font-medium capitalize">
-              {suggestion.travel_style.replace("-", " ")}
-            </Text>
-          </View>
-          <View className="flex-row justify-between">
-            <Text className="text-gray-600">Group Size:</Text>
-            <Text className="text-gray-800 font-medium">
-              {suggestion.group_size} travelers
-            </Text>
-          </View>
-          <View className="flex-row justify-between">
-            <Text className="text-gray-600">Accommodation:</Text>
-            <Text className="text-gray-800 font-medium capitalize">
-              {suggestion.accommodation_preference.replace("-", " ")}
-            </Text>
-          </View>
-          {suggestion.include_volunteer_activities && (
-            <View className="flex-row items-center mt-2 bg-green-100 rounded-lg p-2">
-              <Ionicons name="heart" size={16} color="#16a34a" />
-              <Text className="text-green-700 ml-2 font-medium">
-                Includes volunteer activities
-              </Text>
-            </View>
-          )}
-        </View>
       </View>
 
       {/* Action Buttons */}

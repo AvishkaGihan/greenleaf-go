@@ -6,6 +6,32 @@ import Restaurant from "../models/Restaurant.js";
 
 const ai = new GoogleGenAI({});
 
+// Helper function for delay
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Helper function for retry with exponential backoff
+async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error.status === 503 && attempt < maxRetries - 1) {
+        const delayTime = baseDelay * Math.pow(2, attempt);
+        console.log(
+          `Attempt ${
+            attempt + 1
+          } failed with 503, retrying in ${delayTime}ms...`
+        );
+        await delay(delayTime);
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
 export async function generateAISuggestions(props) {
   const {
     destination_city,
@@ -120,12 +146,15 @@ Each activity object must have:
 - endTime (string, optional, format HH:MM)
 - address (string, optional)
   `;
-
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: prompt,
+  console.log("AI Prompt:", prompt);
+  const response = await retryWithBackoff(async () => {
+    return await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
   });
   const text = response.text; // Gemini returns markdown → raw text
   const jsonString = text.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+  console.log("AI Response:", jsonString);
   return JSON.parse(jsonString); // parse back to JS object
 }

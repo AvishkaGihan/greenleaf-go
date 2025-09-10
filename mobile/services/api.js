@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Base API configuration
 const API_BASE_URL = __DEV__
-  ? "http://192.168.100.227:5000/api/v1" // Replace with your computer's IP address
+  ? "http://192.168.100.36:5000/api/v1" // Replace with your computer's IP address
   : "https://your-production-api.com/api/v1"; // Update for production
 
 console.log("API Base URL:", API_BASE_URL);
@@ -11,7 +11,7 @@ console.log("API Base URL:", API_BASE_URL);
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 120000, // Increased from 10000ms to 120000ms (2 minutes) for AI generation
   headers: {
     "Content-Type": "application/json",
   },
