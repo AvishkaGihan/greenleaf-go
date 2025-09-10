@@ -1,8 +1,10 @@
 import ConservationEvent from "../models/ConservationEvent.js";
 import EventRSVP from "../models/EventRSVP.js";
 import UserActivity from "../models/UserActivity.js";
+import User from "../models/User.js";
 import { AppError } from "../utils/errorHandler.js";
 import { calculateDistance } from "../services/geoService.js";
+import { checkAndAwardBadges } from "../services/badgeService.js";
 
 export const getEvents = async (req, res, next) => {
   try {
@@ -332,15 +334,15 @@ export const checkInEvent = async (req, res, next) => {
       $inc: { totalEcoPoints: event.ecoPointsReward },
     });
 
-    // Check for badge unlocks (simplified)
-    const badgesUnlocked = []; // Would implement badge checking logic
+    // Check and award badges
+    await checkAndAwardBadges(userId, "event_attended");
 
     res.json({
       success: true,
       message: "Check-in successful",
       data: {
         ecoPointsEarned: event.ecoPointsReward,
-        badgesUnlocked,
+        badgesUnlocked: [], // Badge notifications are handled separately
       },
     });
   } catch (error) {

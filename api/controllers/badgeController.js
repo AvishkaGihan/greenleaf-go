@@ -1,6 +1,7 @@
 import EcoBadge from "../models/EcoBadge.js";
 import UserBadge from "../models/UserBadge.js";
 import { AppError } from "../utils/errorHandler.js";
+import { getUserProgress } from "../services/badgeService.js";
 
 export const getBadges = async (req, res, next) => {
   try {
@@ -137,6 +138,77 @@ export const deleteBadge = async (req, res, next) => {
     res.json({
       success: true,
       message: "Badge deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getBadgeProgress = async (req, res, next) => {
+  try {
+    const badgeId = req.params.id;
+    const userId = req.user._id;
+
+    const progress = await getUserProgress(userId, badgeId);
+
+    if (!progress) {
+      throw new AppError("Badge not found", 404, "NOT_FOUND");
+    }
+
+    res.json({
+      success: true,
+      data: {
+        badgeId,
+        progress,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getNextBadges = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    // Get all badges
+    const allBadges = await EcoBadge.find({ isActive: true }).sort({
+      requirementsThreshold: 1,
+    });
+
+    // Get user's earned badges
+    const userBadges = await UserBadge.find({ userId }).select("badgeId");
+    const earnedBadgeIds = userBadges.map((ub) => ub.badgeId.toString());
+
+    // Filter unearned badges and get progress for each
+    const nextBadges = [];
+    for (const badge of allBadges) {
+      if (!earnedBadgeIds.includes(badge._id.toString())) {
+        const progress = await getUserProgress(userId, badge._id);
+        nextBadges.push({
+          id: badge._id,
+          name: badge.name,
+          description: badge.description,
+          emoji: badge.emoji,
+          category: badge.category,
+          rarity: badge.rarity,
+          requirementsType: badge.requirementsType,
+          requirementsThreshold: badge.requirementsThreshold,
+          pointsReward: badge.pointsReward,
+          progress,
+        });
+      }
+    }
+
+    // Sort by progress percentage (closest to completion first)
+    nextBadges.sort((a, b) => b.progress.percentage - a.progress.percentage);
+
+    res.json({
+      success: true,
+      data: {
+        nextBadges: nextBadges.slice(0, 5), // Return top 5 closest badges
+        totalAvailable: nextBadges.length,
+      },
     });
   } catch (error) {
     next(error);

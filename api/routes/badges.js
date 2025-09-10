@@ -6,6 +6,8 @@ import {
   createBadge,
   updateBadge,
   deleteBadge,
+  getBadgeProgress,
+  getNextBadges,
 } from "../controllers/badgeController.js";
 import { authenticate, authenticateAdmin } from "../middleware/auth.js";
 
@@ -14,6 +16,8 @@ router.get("/", getBadges);
 
 // Authenticated user routes
 router.get("/user", authenticate, getUserBadges);
+router.get("/next", authenticate, getNextBadges);
+router.get("/:id/progress", authenticate, getBadgeProgress);
 
 // Admin routes
 router.post("/", authenticateAdmin, createBadge);

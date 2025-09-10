@@ -4,6 +4,7 @@ import Restaurant from "../models/Restaurant.js";
 import User from "../models/User.js";
 import UserActivity from "../models/UserActivity.js";
 import { AppError } from "../utils/errorHandler.js";
+import { checkAndAwardBadges } from "../services/badgeService.js";
 
 export const getAccommodationReviews = async (req, res, next) => {
   try {
@@ -176,6 +177,9 @@ export const createAccommodationReview = async (req, res, next) => {
       $inc: { totalEcoPoints: 25 },
     });
 
+    // Check and award badges
+    await checkAndAwardBadges(req.user._id, "review_written");
+
     res.status(201).json({
       success: true,
       message: "Review submitted successfully",
@@ -240,6 +244,9 @@ export const createRestaurantReview = async (req, res, next) => {
     await User.findByIdAndUpdate(req.user._id, {
       $inc: { totalEcoPoints: 25 },
     });
+
+    // Check and award badges
+    await checkAndAwardBadges(req.user._id, "review_written");
 
     res.status(201).json({
       success: true,
