@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function SignInScreen() {
-  const [email, setEmail] = useState("demo@greenleafgo.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login, isLoading } = useAuth();
 
