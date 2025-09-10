@@ -64,7 +64,7 @@ export default function PlanScreen() {
     "local-experiences",
   ];
 
-  const availableCurrencies = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"];
+  const availableCurrencies = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "LKR"];
 
   // Helper function to format date for display
   const formatDateForDisplay = (dateString: string) => {
@@ -497,7 +497,7 @@ export default function PlanScreen() {
                   <TouchableOpacity
                     className={`flex-row items-center bg-gray-50 border rounded-2xl px-4 py-4 ${
                       showStartDatePicker
-                        ? "border-primary bg-primary bg-opacity-5"
+                        ? "border-primary bg-primary/5"
                         : "border-gray-200"
                     }`}
                     onPress={openStartDatePicker}
@@ -528,7 +528,7 @@ export default function PlanScreen() {
                   <TouchableOpacity
                     className={`flex-row items-center bg-gray-50 border rounded-2xl px-4 py-4 ${
                       showEndDatePicker
-                        ? "border-primary bg-primary bg-opacity-5"
+                        ? "border-primary bg-primary/5"
                         : "border-gray-200"
                     }`}
                     onPress={openEndDatePicker}
@@ -881,20 +881,37 @@ export default function PlanScreen() {
                     showsHorizontalScrollIndicator={false}
                     className="mx-2"
                   >
-                    <View className="flex-row gap-3 px-2">
+                    <View className="flex-row gap-4 px-2">
                       {generatedSuggestions.map((suggestion, index) => (
                         <TouchableOpacity
                           key={index}
-                          className={`px-5 py-3 rounded-2xl border shadow-sm ${
+                          className={`min-w-[120px] px-6 py-4 rounded-3xl border-2 shadow-md transition-all ${
                             selectedSuggestionIndex === index
-                              ? "bg-primary border-primary"
-                              : "bg-white border-gray-200"
+                              ? "bg-green-600 border-green-600 shadow-green-600/20"
+                              : "bg-white border-gray-200 shadow-gray-100"
                           }`}
                           onPress={() => setSelectedSuggestionIndex(index)}
                         >
                           <View className="items-center">
+                            <View
+                              className={`w-8 h-8 rounded-full items-center justify-center mb-2 ${
+                                selectedSuggestionIndex === index
+                                  ? "bg-white/30"
+                                  : "bg-gray-100"
+                              }`}
+                            >
+                              <Text
+                                className={`font-bold text-sm ${
+                                  selectedSuggestionIndex === index
+                                    ? "text-white"
+                                    : "text-gray-600"
+                                }`}
+                              >
+                                {index + 1}
+                              </Text>
+                            </View>
                             <Text
-                              className={`font-semibold mb-1 ${
+                              className={`font-semibold text-sm mb-2 ${
                                 selectedSuggestionIndex === index
                                   ? "text-white"
                                   : "text-gray-700"
@@ -903,7 +920,13 @@ export default function PlanScreen() {
                               Option {index + 1}
                             </Text>
                             {suggestion.ecoScore && (
-                              <View className="flex-row items-center">
+                              <View
+                                className={`flex-row items-center px-2 py-1 rounded-full ${
+                                  selectedSuggestionIndex === index
+                                    ? "bg-white/20"
+                                    : "bg-green-50"
+                                }`}
+                              >
                                 <Ionicons
                                   name="leaf"
                                   size={12}
@@ -914,7 +937,7 @@ export default function PlanScreen() {
                                   }
                                 />
                                 <Text
-                                  className={`text-xs ml-1 ${
+                                  className={`text-xs ml-1 font-medium ${
                                     selectedSuggestionIndex === index
                                       ? "text-white"
                                       : "text-green-600"
@@ -969,45 +992,65 @@ export default function PlanScreen() {
 
       {/* Date Pickers */}
       {showStartDatePicker && Platform.OS === "ios" && (
-        <View className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 justify-end">
-          <View className="bg-white rounded-t-3xl">
-            <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-              <Text className="text-lg font-semibold text-gray-900">
-                Select Start Date
-              </Text>
-              <TouchableOpacity onPress={closeStartDatePicker}>
-                <Text className="text-primary font-semibold text-lg">Done</Text>
+        <View className="absolute top-0 left-0 right-0 bottom-0 bg-gray-900/40 justify-end">
+          <View className="bg-white rounded-t-3xl shadow-2xl">
+            <View className="flex-row justify-between items-center px-6 py-4 border-b border-gray-100">
+              <View className="flex-row items-center">
+                <View className="w-6 h-6 bg-primary rounded-full items-center justify-center mr-3">
+                  <Ionicons name="calendar" size={14} color="white" />
+                </View>
+                <Text className="text-lg font-bold text-gray-900">
+                  Select Start Date
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={closeStartDatePicker}
+                className="bg-primary rounded-full px-4 py-2"
+              >
+                <Text className="text-white font-semibold">Done</Text>
               </TouchableOpacity>
             </View>
-            <DateTimePicker
-              value={tempStartDate}
-              mode="date"
-              display="spinner"
-              onChange={handleStartDateChange}
-              minimumDate={new Date()}
-            />
+            <View className="px-4 py-2">
+              <DateTimePicker
+                value={tempStartDate}
+                mode="date"
+                display="spinner"
+                onChange={handleStartDateChange}
+                minimumDate={new Date()}
+              />
+            </View>
           </View>
         </View>
       )}
 
       {showEndDatePicker && Platform.OS === "ios" && (
-        <View className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 justify-end">
-          <View className="bg-white rounded-t-3xl">
-            <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-              <Text className="text-lg font-semibold text-gray-900">
-                Select End Date
-              </Text>
-              <TouchableOpacity onPress={closeEndDatePicker}>
-                <Text className="text-primary font-semibold text-lg">Done</Text>
+        <View className="absolute top-0 left-0 right-0 bottom-0 bg-gray-900/40 justify-end">
+          <View className="bg-white rounded-t-3xl shadow-2xl">
+            <View className="flex-row justify-between items-center px-6 py-4 border-b border-gray-100">
+              <View className="flex-row items-center">
+                <View className="w-6 h-6 bg-primary rounded-full items-center justify-center mr-3">
+                  <Ionicons name="calendar" size={14} color="white" />
+                </View>
+                <Text className="text-lg font-bold text-gray-900">
+                  Select End Date
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={closeEndDatePicker}
+                className="bg-primary rounded-full px-4 py-2"
+              >
+                <Text className="text-white font-semibold">Done</Text>
               </TouchableOpacity>
             </View>
-            <DateTimePicker
-              value={tempEndDate}
-              mode="date"
-              display="spinner"
-              onChange={handleEndDateChange}
-              minimumDate={startDate ? new Date(startDate) : new Date()}
-            />
+            <View className="px-4 py-2">
+              <DateTimePicker
+                value={tempEndDate}
+                mode="date"
+                display="spinner"
+                onChange={handleEndDateChange}
+                minimumDate={startDate ? new Date(startDate) : new Date()}
+              />
+            </View>
           </View>
         </View>
       )}
