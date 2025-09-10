@@ -77,6 +77,7 @@ export interface CreateReviewData {
 
 export interface Itinerary {
   id: string;
+  _id?: string; // MongoDB ObjectId field
   title: string;
   description?: string;
   destinationCity: string;

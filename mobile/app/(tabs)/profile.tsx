@@ -234,7 +234,7 @@ export default function ProfileScreen() {
   const renderItinerary = ({ item }: { item: Itinerary }) => (
     <TouchableOpacity
       className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm"
-      onPress={() => router.push(`/plan/${item.id}`)}
+      onPress={() => router.push(`/plan/${item._id || item.id}`)}
     >
       <View className="flex-row items-start justify-between mb-2">
         <View className="flex-1">
@@ -555,14 +555,6 @@ export default function ProfileScreen() {
                 My Itineraries
               </Text>
               <View className="flex-row items-center">
-                {itineraries.length > 0 && (
-                  <TouchableOpacity
-                    onPress={() => router.push("/(tabs)/plan")}
-                    className="mr-3"
-                  >
-                    <Text className="text-primary font-medium">View All</Text>
-                  </TouchableOpacity>
-                )}
                 <TouchableOpacity onPress={() => router.push("/(tabs)/plan")}>
                   <Text className="text-primary font-medium">Create New</Text>
                 </TouchableOpacity>

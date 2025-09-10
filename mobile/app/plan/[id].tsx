@@ -25,17 +25,24 @@ export default function ItineraryDetailsScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) {
+    if (id && id !== "undefined") {
       fetchItineraryDetails();
+    } else {
+      setError("Invalid itinerary ID");
+      setLoading(false);
     }
   }, [id]);
 
   const fetchItineraryDetails = async (isRefreshing = false) => {
     try {
+      if (!id || id === "undefined") {
+        throw new Error("Invalid itinerary ID");
+      }
+
       if (!isRefreshing) setLoading(true);
       setError(null);
 
-      const response = await itineraryAPI.getItinerary(id!);
+      const response = await itineraryAPI.getItinerary(id);
       const data = response.data;
 
       setItinerary(data);
@@ -163,9 +170,9 @@ export default function ItineraryDetailsScreen() {
                   <>
                     <View className="w-1 h-1 bg-gray-400 rounded-full mx-2" />
                     <Text className="text-gray-500 text-sm">
-                      {item.startTime && formatTime(item.startTime)}
-                      {item.startTime && item.endTime && " - "}
-                      {item.endTime && formatTime(item.endTime)}
+                      {item.startTime ? formatTime(item.startTime) : ""}
+                      {item.startTime && item.endTime ? " - " : ""}
+                      {item.endTime ? formatTime(item.endTime) : ""}
                     </Text>
                   </>
                 )}
@@ -305,7 +312,7 @@ export default function ItineraryDetailsScreen() {
                 </View>
               </View>
 
-              {itinerary.ecoScore && (
+              {typeof itinerary.ecoScore === "number" && (
                 <View className="bg-green-100 rounded-full px-3 py-2">
                   <Text className="text-green-700 font-semibold">
                     🌱 {itinerary.ecoScore}/5
@@ -378,25 +385,25 @@ export default function ItineraryDetailsScreen() {
               <View className="flex-row justify-between">
                 <View className="items-center flex-1">
                   <Text className="text-2xl font-bold text-primary">
-                    {itinerary.summary.accommodations}
+                    {itinerary.summary.accommodations || 0}
                   </Text>
                   <Text className="text-gray-600 text-sm">Hotels</Text>
                 </View>
                 <View className="items-center flex-1">
                   <Text className="text-2xl font-bold text-primary">
-                    {itinerary.summary.restaurants}
+                    {itinerary.summary.restaurants || 0}
                   </Text>
                   <Text className="text-gray-600 text-sm">Restaurants</Text>
                 </View>
                 <View className="items-center flex-1">
                   <Text className="text-2xl font-bold text-primary">
-                    {itinerary.summary.activities}
+                    {itinerary.summary.activities || 0}
                   </Text>
                   <Text className="text-gray-600 text-sm">Activities</Text>
                 </View>
                 <View className="items-center flex-1">
                   <Text className="text-2xl font-bold text-primary">
-                    {itinerary.summary.events}
+                    {itinerary.summary.events || 0}
                   </Text>
                   <Text className="text-gray-600 text-sm">Events</Text>
                 </View>
@@ -466,7 +473,7 @@ export default function ItineraryDetailsScreen() {
                     Estimated Carbon Footprint
                   </Text>
                   <Text className="text-lg font-semibold text-green-700">
-                    {itinerary.estimatedCarbonFootprint} kg CO₂
+                    {itinerary.estimatedCarbonFootprint || 0} kg CO₂
                   </Text>
                 </View>
                 <Text className="text-green-600 text-sm mt-2">
