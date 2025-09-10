@@ -483,7 +483,7 @@ export default function ProfileScreen() {
                 Recent Activity
               </Text>
               {activities.length > 0 && (
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push("/activities")}>
                   <Text className="text-primary font-medium">View All</Text>
                 </TouchableOpacity>
               )}
@@ -554,9 +554,19 @@ export default function ProfileScreen() {
               <Text className="text-xl font-bold text-gray-900">
                 My Itineraries
               </Text>
-              <TouchableOpacity onPress={() => router.push("/(tabs)/plan")}>
-                <Text className="text-primary font-medium">Create New</Text>
-              </TouchableOpacity>
+              <View className="flex-row items-center">
+                {itineraries.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => router.push("/(tabs)/plan")}
+                    className="mr-3"
+                  >
+                    <Text className="text-primary font-medium">View All</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={() => router.push("/(tabs)/plan")}>
+                  <Text className="text-primary font-medium">Create New</Text>
+                </TouchableOpacity>
+              </View>
             </View>
             {itineraries.length > 0 ? (
               <FlatList
