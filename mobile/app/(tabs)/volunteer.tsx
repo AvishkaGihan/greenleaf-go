@@ -16,6 +16,9 @@ import { router } from "expo-router";
 import { ConservationEvent } from "../../types";
 import { eventAPI } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
+import EventRegistrationModal, {
+  RegistrationData,
+} from "../../components/EventRegistrationModal";
 
 export default function VolunteerScreen() {
   const [activeTab, setActiveTab] = useState<"all" | "my">("all");
@@ -24,6 +27,12 @@ export default function VolunteerScreen() {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [registrationModal, setRegistrationModal] = useState({
+    visible: false,
+    eventId: "",
+    eventTitle: "",
+    loading: false,
+  });
   const { user } = useAuth();
 
   const availableFilters = [
@@ -89,7 +98,7 @@ export default function VolunteerScreen() {
     }
   };
 
-  const handleRSVP = async (eventId: string) => {
+  const handleRSVP = (eventId: string, eventTitle: string) => {
     if (!user) {
       Alert.alert("Login Required", "Please log in to RSVP for events", [
         { text: "Cancel", style: "cancel" },
@@ -98,11 +107,28 @@ export default function VolunteerScreen() {
       return;
     }
 
+    // Show registration modal
+    setRegistrationModal({
+      visible: true,
+      eventId,
+      eventTitle,
+      loading: false,
+    });
+  };
+
+  const handleRegistration = async (registrationData: RegistrationData) => {
+    setRegistrationModal((prev) => ({ ...prev, loading: true }));
+
     try {
-      await eventAPI.rsvpEvent(eventId, {});
+      const response = await eventAPI.rsvpEvent(
+        registrationModal.eventId,
+        registrationData
+      );
+
+      // Update events list
       setEvents((prevEvents) =>
         prevEvents.map((event) =>
-          event.id === eventId
+          event.id === registrationModal.eventId
             ? {
                 ...event,
                 userRsvpStatus: "registered",
@@ -111,15 +137,30 @@ export default function VolunteerScreen() {
             : event
         )
       );
+
+      // Show success message with confirmation code
       Alert.alert(
-        "Success",
-        "You have successfully registered for this event!"
+        "Registration Successful!",
+        `You have successfully registered for this event.\n\nConfirmation Code: ${response.data.confirmationCode}\n\nYou can earn ${response.data.ecoPointsPotential} eco points by attending this event.`,
+        [{ text: "OK" }]
       );
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.error?.message || "Failed to register for event";
       Alert.alert("Registration Failed", errorMessage);
+      throw error; // Re-throw to prevent modal from closing
+    } finally {
+      setRegistrationModal((prev) => ({ ...prev, loading: false }));
     }
+  };
+
+  const closeRegistrationModal = () => {
+    setRegistrationModal({
+      visible: false,
+      eventId: "",
+      eventTitle: "",
+      loading: false,
+    });
   };
 
   const handleCancelRSVP = async (eventId: string) => {
@@ -416,7 +457,7 @@ export default function VolunteerScreen() {
             className={`rounded-2xl py-4 items-center ${
               availableSpots > 0 ? "bg-primary" : "bg-gray-300"
             }`}
-            onPress={() => handleRSVP(item.id)}
+            onPress={() => handleRSVP(item.id, item.title)}
             disabled={availableSpots === 0}
           >
             <Text
@@ -590,6 +631,15 @@ export default function VolunteerScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Registration Modal */}
+      <EventRegistrationModal
+        visible={registrationModal.visible}
+        onClose={closeRegistrationModal}
+        onRegister={handleRegistration}
+        eventTitle={registrationModal.eventTitle}
+        loading={registrationModal.loading}
+      />
     </SafeAreaView>
   );
 }
