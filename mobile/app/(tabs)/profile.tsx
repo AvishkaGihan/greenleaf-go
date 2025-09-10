@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Badge, Itinerary, User, UserActivity } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 import { userAPI } from "../../services/api";
@@ -36,6 +36,15 @@ export default function ProfileScreen() {
       setLoading(false);
     }
   }, [user]);
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        fetchProfileData();
+      }
+    }, [user])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -411,12 +420,14 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 key="edit-profile"
                 className="flex-1 bg-primary rounded-2xl py-3 items-center"
+                onPress={() => router.push("/edit-profile")}
               >
                 <Text className="text-white font-semibold">Edit Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 key="settings"
                 className="flex-1 bg-gray-100 rounded-2xl py-3 items-center"
+                onPress={() => router.push("/settings")}
               >
                 <Text className="text-gray-700 font-semibold">Settings</Text>
               </TouchableOpacity>

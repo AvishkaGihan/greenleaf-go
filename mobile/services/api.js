@@ -111,6 +111,22 @@ export const userAPI = {
     return response.data;
   },
 
+  uploadAvatar: async (imageUri) => {
+    const formData = new FormData();
+    formData.append("avatar", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "avatar.jpg",
+    });
+
+    const response = await api.post("/users/profile/upload-avatar", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
   getUserBadges: async () => {
     const response = await api.get("/users/profile/badges");
     return response.data;
