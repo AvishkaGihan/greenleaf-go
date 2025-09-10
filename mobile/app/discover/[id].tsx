@@ -20,6 +20,7 @@ import { EcoPlace, Review, ReviewSummary, CreateReviewData } from "../../types";
 import EcoRating from "../../components/EcoRating";
 import ReviewsList from "../../components/ReviewsList";
 import WriteReviewModal from "../../components/WriteReviewModal";
+import AddToItineraryModal from "../../components/AddToItineraryModal";
 import { accommodationAPI, reviewAPI } from "../../services/api";
 
 export default function EcoPlaceDetailScreen() {
@@ -35,6 +36,7 @@ export default function EcoPlaceDetailScreen() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [showWriteReview, setShowWriteReview] = useState(false);
+  const [showAddToItinerary, setShowAddToItinerary] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "reviews">(
     "overview"
   );
@@ -209,16 +211,17 @@ export default function EcoPlaceDetailScreen() {
   }
 
   const handleAddToItinerary = () => {
-    Alert.alert("Add to Itinerary", `Add ${place.name} to your trip?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Add",
-        onPress: () => {
-          setSavedConfirmation(true);
-          setTimeout(() => setSavedConfirmation(false), 3000);
-        },
-      },
-    ]);
+    setShowAddToItinerary(true);
+  };
+
+  const handleItinerarySuccess = (itineraryTitle: string) => {
+    setSavedConfirmation(true);
+    Alert.alert(
+      "Added to Itinerary!",
+      `${place?.name} has been added to "${itineraryTitle}". You've earned 25 eco points!`,
+      [{ text: "OK" }]
+    );
+    setTimeout(() => setSavedConfirmation(false), 3000);
   };
 
   const handleShare = async () => {
@@ -935,6 +938,19 @@ export default function EcoPlaceDetailScreen() {
         onSubmit={handleWriteReview}
         placeName={place.name}
       />
+
+      {/* Add to Itinerary Modal */}
+      {place && (
+        <AddToItineraryModal
+          visible={showAddToItinerary}
+          onClose={() => setShowAddToItinerary(false)}
+          onSuccess={handleItinerarySuccess}
+          accommodationId={place.id}
+          accommodationName={place.name}
+          accommodationAddress={place.address}
+          priceRange={place.price}
+        />
+      )}
     </SafeAreaView>
   );
 }
