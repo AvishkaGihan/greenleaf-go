@@ -1,11 +1,19 @@
+import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { MENU_ITEMS } from "../../utils/constants";
 
-const Sidebar = ({
-  activeScreen,
-  setActiveScreen,
-  sidebarOpen,
-  setSidebarOpen,
-}) => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavigation = (path) => {
+    navigate(path);
+    setSidebarOpen(false);
+  };
+
+  // Get current path to determine active item
+  const currentPath = location.pathname;
+
   return (
     <>
       {/* Overlay for mobile */}
@@ -31,23 +39,26 @@ const Sidebar = ({
         </div>
 
         <nav className="mt-6">
-          {MENU_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              className={`w-full flex items-center px-6 py-3 mt-2 text-left transition-colors duration-300 transform ${
-                activeScreen === item.id
-                  ? "bg-green-700 text-white"
-                  : "text-gray-300 hover:bg-green-800 hover:text-white"
-              }`}
-              onClick={() => {
-                setActiveScreen(item.id);
-                setSidebarOpen(false);
-              }}
-            >
-              <i className={`${item.icon} w-5 h-5`}></i>
-              <span className="mx-4 font-medium">{item.label}</span>
-            </button>
-          ))}
+          {MENU_ITEMS.map((item) => {
+            const isActive =
+              currentPath === item.path ||
+              (item.path === "/dashboard" && currentPath === "/");
+
+            return (
+              <button
+                key={item.id}
+                className={`w-full flex items-center px-6 py-3 mt-2 text-left transition-colors duration-300 transform ${
+                  isActive
+                    ? "bg-green-700 text-white"
+                    : "text-gray-300 hover:bg-green-800 hover:text-white"
+                }`}
+                onClick={() => handleNavigation(item.path)}
+              >
+                <i className={`${item.icon} w-5 h-5`}></i>
+                <span className="mx-4 font-medium">{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
       </aside>
     </>

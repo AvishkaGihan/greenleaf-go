@@ -1,15 +1,38 @@
 export const MENU_ITEMS = [
-  { id: "dashboard", label: "Dashboard", icon: "fas fa-tachometer-alt" },
-  { id: "accommodations", label: "Accommodations", icon: "fas fa-hotel" },
-  { id: "restaurants", label: "Restaurants", icon: "fas fa-utensils" },
-  { id: "events", label: "Events", icon: "fas fa-calendar-alt" },
-  { id: "users", label: "Users", icon: "fas fa-users" },
-  { id: "rsvps", label: "RSVPs", icon: "fas fa-ticket-alt" },
-  { id: "itineraries", label: "Itineraries", icon: "fas fa-route" },
-  { id: "badges", label: "Badges", icon: "fas fa-award" },
-  { id: "reviews", label: "Reviews", icon: "fas fa-star" },
-  { id: "settings", label: "Settings", icon: "fas fa-cog" },
-  { id: "logout", label: "Logout", icon: "fas fa-sign-out-alt" },
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: "fas fa-tachometer-alt",
+    path: "/dashboard",
+  },
+  {
+    id: "accommodations",
+    label: "Accommodations",
+    icon: "fas fa-hotel",
+    path: "/accommodations",
+  },
+  {
+    id: "restaurants",
+    label: "Restaurants",
+    icon: "fas fa-utensils",
+    path: "/restaurants",
+  },
+  {
+    id: "events",
+    label: "Events",
+    icon: "fas fa-calendar-alt",
+    path: "/events",
+  },
+  { id: "users", label: "Users", icon: "fas fa-users", path: "/users" },
+  { id: "rsvps", label: "RSVPs", icon: "fas fa-ticket-alt", path: "/rsvps" },
+  {
+    id: "itineraries",
+    label: "Itineraries",
+    icon: "fas fa-route",
+    path: "/itineraries",
+  },
+  { id: "badges", label: "Badges", icon: "fas fa-award", path: "/badges" },
+  { id: "reviews", label: "Reviews", icon: "fas fa-star", path: "/reviews" },
 ];
 
 export const ACCOMMODATION_TYPES = [
