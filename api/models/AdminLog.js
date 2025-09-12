@@ -13,6 +13,7 @@ const adminLogSchema = new mongoose.Schema(
         "create",
         "update",
         "delete",
+        "read",
         "approve",
         "reject",
         "flag",
@@ -29,12 +30,13 @@ const adminLogSchema = new mongoose.Schema(
         "event",
         "review",
         "itinerary",
+        "admin",
       ],
       required: true,
     },
     entityId: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
+      required: false,
     },
 
     // Details
@@ -53,7 +55,7 @@ const adminLogSchema = new mongoose.Schema(
 
 // Indexes for audit logging
 adminLogSchema.index({ adminUserId: 1, createdAt: -1 });
-adminLogSchema.index({ entityType: 1, entityId: 1 });
+adminLogSchema.index({ entityType: 1, entityId: 1 }, { sparse: true });
 adminLogSchema.index({ actionType: 1 });
 
 export default mongoose.model("AdminLog", adminLogSchema);

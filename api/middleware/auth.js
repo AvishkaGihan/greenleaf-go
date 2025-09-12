@@ -102,17 +102,27 @@ const logAdminAction = async (req, res, next) => {
             ? "update"
             : req.method.toLowerCase() === "delete"
             ? "delete"
+            : req.method.toLowerCase() === "get"
+            ? "read"
             : "other",
         entityType: req.baseUrl.split("/").pop(),
-        entityId: req.params.id,
+        entityId: req.params.id || null,
         description: `${req.method} ${req.originalUrl}`,
         oldValues: req.originalBody,
-        newValues: JSON.parse(data),
+        newValues: (() => {
+          try {
+            return JSON.parse(data);
+          } catch {
+            return data; // If not JSON, store as string
+          }
+        })(),
         ipAddress: req.ip,
         userAgent: req.get("User-Agent"),
       };
 
-      AdminLog.create(logData).catch(console.error);
+      AdminLog.create(logData).catch((error) => {
+        console.error("Failed to create admin log:", error.message);
+      });
     }
 
     originalSend.call(this, data);
