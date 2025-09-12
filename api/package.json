@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
+    "start": "node App.js",
+    "dev": "nodemon App.js",
     "test": "jest --testTimeout=10000",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

@@ -149,6 +149,16 @@ export const analyticsAPI = {
     api.get("/api/v1/analytics/environmental-impact", { params }),
 };
 
+// Itinerary API calls
+export const itineraryAPI = {
+  getItineraries: (params) => api.get("/api/v1/admin/itineraries", { params }),
+  getItineraryById: (id) => api.get(`/api/v1/admin/itineraries/${id}`),
+  moderateItinerary: (id, data) =>
+    api.put(`/api/v1/admin/itineraries/${id}/moderate`, data),
+  getItineraryAnalytics: (params) =>
+    api.get("/api/v1/admin/itineraries/analytics", { params }),
+};
+
 // Upload API calls
 export const uploadAPI = {
   uploadImage: (formData) =>

@@ -10,6 +10,10 @@ import {
   approveReview,
   rejectReview,
   flagReview,
+  getItineraries,
+  getItineraryDetails,
+  moderateItinerary,
+  getItineraryAnalytics,
 } from "../controllers/adminController.js";
 import { authenticateAdmin, logAdminAction } from "../middleware/auth.js";
 
@@ -31,5 +35,11 @@ router.get("/reviews", getReviews);
 router.put("/reviews/:id/approve", approveReview);
 router.put("/reviews/:id/reject", rejectReview);
 router.put("/reviews/:id/flag", flagReview);
+
+// Itinerary management
+router.get("/itineraries/analytics", getItineraryAnalytics);
+router.get("/itineraries", getItineraries);
+router.get("/itineraries/:id", getItineraryDetails);
+router.put("/itineraries/:id/moderate", moderateItinerary);
 
 export default router;
