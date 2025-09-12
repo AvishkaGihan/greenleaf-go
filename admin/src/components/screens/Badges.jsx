@@ -138,26 +138,24 @@ const Badges = () => {
     setEditingItem(null);
   };
 
-  const getRequirementsText = (requirements) => {
-    if (!requirements || requirements.length === 0)
+  const getRequirementsText = (badge) => {
+    if (!badge.requirementsType || !badge.requirementsThreshold)
       return "No specific requirements";
 
-    return requirements
-      .map((req) => {
-        switch (req.type) {
-          case "events_attended":
-            return `Attend ${req.count} events`;
-          case "places_visited":
-            return `Visit ${req.count} eco-rated places`;
-          case "reviews_written":
-            return `Write ${req.count} reviews`;
-          case "eco_score":
-            return `Achieve eco score of ${req.score}`;
-          default:
-            return req.description || "Custom requirement";
-        }
-      })
-      .join(", ");
+    switch (badge.requirementsType) {
+      case "events_attended":
+        return `Attend ${badge.requirementsThreshold} events`;
+      case "eco_points":
+        return `Achieve ${badge.requirementsThreshold} eco points`;
+      case "accommodations_booked":
+        return `Book ${badge.requirementsThreshold} eco-rated accommodations`;
+      case "reviews_written":
+        return `Write ${badge.requirementsThreshold} reviews`;
+      case "referrals":
+        return `Make ${badge.requirementsThreshold} referrals`;
+      default:
+        return "Custom requirement";
+    }
   };
 
   // Table columns configuration
@@ -167,7 +165,7 @@ const Badges = () => {
       header: "Badge",
       render: (badge) => (
         <div className="text-2xl" title={badge.name}>
-          {badge.icon || ""}
+          {badge.emoji || "🏆"}
         </div>
       ),
     },
@@ -189,18 +187,15 @@ const Badges = () => {
       key: "requirements",
       header: "Requirements",
       render: (badge) => (
-        <div
-          className="max-w-xs truncate"
-          title={getRequirementsText(badge.requirements)}
-        >
-          {getRequirementsText(badge.requirements)}
+        <div className="max-w-xs truncate" title={getRequirementsText(badge)}>
+          {getRequirementsText(badge)}
         </div>
       ),
     },
     {
       key: "points",
       header: "Points",
-      render: (badge) => badge.points || 0,
+      render: (badge) => badge.pointsReward || 0,
     },
     {
       key: "earnedBy",

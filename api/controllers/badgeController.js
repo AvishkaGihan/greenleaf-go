@@ -15,6 +15,11 @@ export const getBadges = async (req, res, next) => {
       requirementsThreshold: 1,
     });
 
+    // Get count of users who earned each badge
+    const earnedCounts = await UserBadge.aggregate([
+      { $group: { _id: "$badgeId", count: { $sum: 1 } } },
+    ]);
+
     let userBadges = [];
     if (req.user) {
       userBadges = await UserBadge.find({ userId: req.user._id })
@@ -29,6 +34,10 @@ export const getBadges = async (req, res, next) => {
           const userBadge = userBadges.find(
             (ub) => ub.badgeId._id.toString() === badge._id.toString()
           );
+          const earnedCount =
+            earnedCounts.find(
+              (ec) => ec._id.toString() === badge._id.toString()
+            )?.count || 0;
 
           return {
             id: badge._id,
@@ -40,6 +49,7 @@ export const getBadges = async (req, res, next) => {
             requirementsThreshold: badge.requirementsThreshold,
             pointsReward: badge.pointsReward,
             rarity: badge.rarity,
+            earnedBy: earnedCount,
             earned: !!userBadge,
             earnedAt: userBadge?.earnedAt,
           };
