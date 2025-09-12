@@ -85,9 +85,8 @@ export const dashboardAPI = {
 export const userAPI = {
   getUsers: (params) => api.get("/api/v1/admin/users", { params }),
   getUserById: (id) => api.get(`/api/v1/admin/users/${id}`),
-  updateUserStatus: (id, status) =>
-    api.put(`/api/v1/admin/users/${id}/status`, { status }),
-  deleteUser: (id) => api.delete(`/api/v1/admin/users/${id}`),
+  suspendUser: (id, data) => api.put(`/api/v1/admin/users/${id}/suspend`, data),
+  activateUser: (id) => api.put(`/api/v1/admin/users/${id}/activate`),
 };
 
 // Accommodation API calls

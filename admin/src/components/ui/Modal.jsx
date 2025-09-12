@@ -25,7 +25,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 transition-opacity" aria-hidden="true">
           <div
-            className="absolute inset-0 bg-gray-500 opacity-75"
+            className="fixed inset-0 bg-gray-500/75 z-50"
             onClick={onClose}
           ></div>
         </div>
@@ -38,7 +38,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
         </span>
 
         <div
-          className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle ${sizeClasses[size]} w-full`}
+          className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle z-[60] ${sizeClasses[size]} w-full`}
         >
           <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="flex justify-between items-center mb-4">

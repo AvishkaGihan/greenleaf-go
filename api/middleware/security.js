@@ -5,7 +5,11 @@ import cors from "cors";
 // CORS configuration
 const corsOptions = {
   origin:
-    process.env.NODE_ENV === "production" ? ["https://yourdomain.com"] : "*",
+    process.env.NODE_ENV === "production"
+      ? ["https://yourdomain.com"]
+      : ["http://localhost:5173"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
   optionsSuccessStatus: 200,
 };
