@@ -2,8 +2,6 @@ import User from "../models/User.js";
 import UserActivity from "../models/UserActivity.js";
 import EventRSVP from "../models/EventRSVP.js";
 import Review from "../models/Review.js";
-import Itinerary from "../models/Itinerary.js";
-import { AppError } from "../utils/errorHandler.js";
 
 export const getUserAnalytics = async (req, res, next) => {
   try {
