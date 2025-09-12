@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "../contexts/useAuth.js";
+import { useAuth } from "../hooks/useAuth.js";
 import Sidebar from "./layout/Sidebar.jsx";
 import Header from "./layout/Header.jsx";
 

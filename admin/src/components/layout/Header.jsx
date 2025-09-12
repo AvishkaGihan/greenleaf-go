@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "../../contexts/useAuth.js";
+import { useAuth } from "../../hooks/useAuth.js";
 
 const Header = ({ sidebarOpen, setSidebarOpen, onLogout }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
