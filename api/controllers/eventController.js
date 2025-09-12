@@ -349,3 +349,87 @@ export const checkInEvent = async (req, res, next) => {
     next(error);
   }
 };
+
+// Admin functions
+export const updateEvent = async (req, res, next) => {
+  try {
+    const eventId = req.params.id;
+    const updateData = req.body;
+
+    // Add location if coordinates provided
+    if (updateData.latitude && updateData.longitude) {
+      updateData.location = {
+        type: "Point",
+        coordinates: [
+          parseFloat(updateData.longitude),
+          parseFloat(updateData.latitude),
+        ],
+      };
+    }
+
+    const event = await ConservationEvent.findByIdAndUpdate(
+      eventId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!event) {
+      throw new AppError("Event not found", 404, "NOT_FOUND");
+    }
+
+    res.json({
+      success: true,
+      message: "Event updated successfully",
+      data: event,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteEvent = async (req, res, next) => {
+  try {
+    const eventId = req.params.id;
+
+    const event = await ConservationEvent.findByIdAndUpdate(
+      eventId,
+      { isActive: false },
+      { new: true }
+    );
+
+    if (!event) {
+      throw new AppError("Event not found", 404, "NOT_FOUND");
+    }
+
+    res.json({
+      success: true,
+      message: "Event deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const approveEvent = async (req, res, next) => {
+  try {
+    const eventId = req.params.id;
+
+    const event = await ConservationEvent.findByIdAndUpdate(
+      eventId,
+      { isApproved: true },
+      { new: true }
+    );
+
+    if (!event) {
+      throw new AppError("Event not found", 404, "NOT_FOUND");
+    }
+
+    res.json({
+      success: true,
+      message: "Event approved successfully",
+      data: event,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

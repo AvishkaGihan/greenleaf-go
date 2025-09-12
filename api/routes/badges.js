@@ -8,6 +8,7 @@ import {
   deleteBadge,
   getBadgeProgress,
   getNextBadges,
+  assignBadge,
 } from "../controllers/badgeController.js";
 import { authenticate, authenticateAdmin } from "../middleware/auth.js";
 
@@ -23,5 +24,6 @@ router.get("/:id/progress", authenticate, getBadgeProgress);
 router.post("/", authenticateAdmin, createBadge);
 router.put("/:id", authenticateAdmin, updateBadge);
 router.delete("/:id", authenticateAdmin, deleteBadge);
+router.post("/:id/assign", authenticateAdmin, assignBadge);
 
 export default router;

@@ -214,3 +214,50 @@ export const getNextBadges = async (req, res, next) => {
     next(error);
   }
 };
+
+// Assign badge to user (Admin only)
+export const assignBadge = async (req, res, next) => {
+  try {
+    const { id: badgeId } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return next(new AppError("User ID is required", 400));
+    }
+
+    // Check if badge exists
+    const badge = await EcoBadge.findById(badgeId);
+    if (!badge) {
+      return next(new AppError("Badge not found", 404));
+    }
+
+    // Check if user already has this badge
+    const existingUserBadge = await UserBadge.findOne({
+      userId,
+      badgeId,
+    });
+
+    if (existingUserBadge) {
+      return next(new AppError("User already has this badge", 400));
+    }
+
+    // Create new user badge
+    const userBadge = new UserBadge({
+      userId,
+      badgeId,
+      earnedAt: new Date(),
+    });
+
+    await userBadge.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Badge assigned successfully",
+      data: {
+        userBadge,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

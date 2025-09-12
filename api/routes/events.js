@@ -4,6 +4,9 @@ import {
   getEvents,
   getEvent,
   createEvent,
+  updateEvent,
+  deleteEvent,
+  approveEvent,
   rsvpEvent,
   cancelRsvp,
   checkInEvent,
@@ -26,5 +29,8 @@ router.post("/:id/check-in", authenticate, checkInEvent);
 
 // Admin routes
 router.post("/", authenticateAdmin, eventValidation, createEvent);
+router.put("/:id", authenticateAdmin, eventValidation, updateEvent);
+router.delete("/:id", authenticateAdmin, deleteEvent);
+router.put("/:id/approve", authenticateAdmin, approveEvent);
 
 export default router;

@@ -116,6 +116,7 @@ export const eventAPI = {
   createEvent: (data) => api.post("/api/v1/events", data),
   updateEvent: (id, data) => api.put(`/api/v1/events/${id}`, data),
   deleteEvent: (id) => api.delete(`/api/v1/events/${id}`),
+  approveEvent: (id) => api.put(`/api/v1/events/${id}/approve`),
 };
 
 // Badge API calls
@@ -124,6 +125,8 @@ export const badgeAPI = {
   createBadge: (data) => api.post("/api/v1/badges", data),
   updateBadge: (id, data) => api.put(`/api/v1/badges/${id}`, data),
   deleteBadge: (id) => api.delete(`/api/v1/badges/${id}`),
+  assignBadge: (badgeId, userId) =>
+    api.post(`/api/v1/badges/${badgeId}/assign`, { userId }),
 };
 
 // Review API calls
