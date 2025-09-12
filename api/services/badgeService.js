@@ -4,15 +4,6 @@ import UserActivity from "../models/UserActivity.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
 
-/**
- * Badge Service - Handles all badge-related logic
- */
-
-/**
- * Check and award badges for a user based on their activities
- * @param {string} userId - User's ID
- * @param {string} activityType - Type of activity that might trigger badge awards
- */
 export const checkAndAwardBadges = async (userId, activityType) => {
   try {
     // Get all active badges
@@ -41,12 +32,6 @@ export const checkAndAwardBadges = async (userId, activityType) => {
   }
 };
 
-/**
- * Check if user is eligible for a specific badge
- * @param {string} userId - User's ID
- * @param {Object} badge - Badge object
- * @returns {boolean} - Whether user is eligible
- */
 export const checkBadgeEligibility = async (userId, badge) => {
   try {
     const { requirementsType, requirementsThreshold } = badge;
@@ -85,11 +70,6 @@ export const checkBadgeEligibility = async (userId, badge) => {
   }
 };
 
-/**
- * Award a badge to a user
- * @param {string} userId - User's ID
- * @param {string} badgeId - Badge ID
- */
 export const awardBadge = async (userId, badgeId) => {
   try {
     // Check if badge already awarded (double-check)
@@ -138,12 +118,6 @@ export const awardBadge = async (userId, badgeId) => {
   }
 };
 
-/**
- * Get user's progress toward a specific badge
- * @param {string} userId - User's ID
- * @param {string} badgeId - Badge ID
- * @returns {Object} - Progress information
- */
 export const getUserProgress = async (userId, badgeId) => {
   try {
     const badge = await EcoBadge.findById(badgeId);
@@ -166,12 +140,6 @@ export const getUserProgress = async (userId, badgeId) => {
   }
 };
 
-/**
- * Get user's current progress for a requirement type
- * @param {string} userId - User's ID
- * @param {string} requirementType - Type of requirement
- * @returns {number} - Current progress value
- */
 const getCurrentProgress = async (userId, requirementType) => {
   switch (requirementType) {
     case "eco_points":
@@ -240,11 +208,6 @@ const checkReferralsRequirement = async (userId, threshold) => {
   return false;
 };
 
-/**
- * Create notification for badge earned
- * @param {string} userId - User's ID
- * @param {Object} badge - Badge object
- */
 const createBadgeNotification = async (userId, badge) => {
   try {
     const notification = new Notification({
