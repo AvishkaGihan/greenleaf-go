@@ -132,9 +132,12 @@ export const badgeAPI = {
 // Review API calls
 export const reviewAPI = {
   getReviews: (params) => api.get("/api/v1/admin/reviews", { params }),
-  updateReviewStatus: (id, status) =>
-    api.put(`/api/v1/admin/reviews/${id}/status`, { status }),
-  deleteReview: (id) => api.delete(`/api/v1/admin/reviews/${id}`),
+  approveReview: (id) => api.put(`/api/v1/admin/reviews/${id}/approve`),
+  rejectReview: (id, reason) =>
+    api.put(`/api/v1/admin/reviews/${id}/reject`, { reason }),
+  flagReview: (id) => api.put(`/api/v1/admin/reviews/${id}/flag`),
+  getReviewAnalytics: (params) =>
+    api.get("/api/v1/admin/reviews/analytics", { params }),
 };
 
 // Analytics API calls

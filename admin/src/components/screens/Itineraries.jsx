@@ -1,4 +1,3 @@
-// components/screens/Itineraries.jsx
 import CrudActions from "../ui/CrudActions";
 import DataTable from "../ui/DataTable";
 
