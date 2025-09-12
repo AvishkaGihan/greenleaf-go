@@ -12,7 +12,7 @@ import {
 } from "../charts/DashboardCharts";
 
 const Dashboard = () => {
-  const [refreshInterval, setRefreshInterval] = useState(30000); // 30 seconds
+  const [refreshInterval, setRefreshInterval] = useState(0); // Disabled by default
   const { data, loading, error, lastUpdated, retry, refetch } =
     useDashboard(refreshInterval);
 
@@ -23,7 +23,7 @@ const Dashboard = () => {
 
   // Toggle auto-refresh
   const toggleAutoRefresh = () => {
-    setRefreshInterval((prev) => (prev === 0 ? 30000 : 0));
+    setRefreshInterval((prev) => (prev === 0 ? 300000 : 0)); // 5 minutes
   };
 
   // Show loading state only on initial load

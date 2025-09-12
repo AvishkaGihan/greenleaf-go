@@ -1,22 +1,24 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { dashboardAPI } from "../services/api";
 
-const useDashboard = (refreshInterval = 30000) => {
+const useDashboard = (refreshInterval = 0) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const isInitialLoad = useRef(true);
 
   const fetchDashboardData = useCallback(async () => {
     try {
       setError(null);
-      if (!data) setLoading(true); // Only show loading on initial fetch
+      if (isInitialLoad.current) setLoading(true); // Only show loading on initial fetch
 
       const response = await dashboardAPI.getStats();
 
       if (response.data.success) {
         setData(response.data.data);
         setLastUpdated(new Date());
+        isInitialLoad.current = false;
       } else {
         throw new Error("Failed to fetch dashboard data");
       }
@@ -30,7 +32,7 @@ const useDashboard = (refreshInterval = 30000) => {
     } finally {
       setLoading(false);
     }
-  }, [data]);
+  }, []);
 
   const retry = useCallback(() => {
     setError(null);

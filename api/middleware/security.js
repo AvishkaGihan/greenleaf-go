@@ -4,10 +4,7 @@ import cors from "cors";
 
 // CORS configuration
 const corsOptions = {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? ["https://yourdomain.com"]
-      : ["http://localhost:5173"],
+  origin: ["http://localhost:5173"],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -35,7 +32,7 @@ const createRateLimiter = (windowMs, max, message) => {
 // Different rate limits for different user types
 const limiter = createRateLimiter(
   15 * 60 * 1000,
-  100,
+  500,
   "Too many requests from this IP, please try again later."
 );
 const authLimiter = createRateLimiter(

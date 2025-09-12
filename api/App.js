@@ -26,9 +26,9 @@ connectDB();
 const app = express();
 
 // Security middleware
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(limiter);
-app.use(cors(corsOptions));
 
 // Body parser
 app.use(express.json({ limit: "10mb" }));
