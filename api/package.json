@@ -23,6 +23,7 @@
   "type": "module",
   "dependencies": {
     "@google/genai": "^1.19.0",
+    "axios": "^1.12.1",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",

@@ -15,6 +15,39 @@ import {
   getAccommodationsValidation,
   getAccommodationReviewsValidation,
 } from "../middleware/validation/accommodationValidation.js";
+import {
+  getPlaceDetails,
+  searchPlaces,
+} from "../services/ecoScoreFromGoogle.js";
+
+// Google Places autocomplete routes (must be before /:id routes)
+router.get("/autocomplete", async (req, res) => {
+  try {
+    const { input } = req.query;
+    if (!input) {
+      return res.status(400).json({ error: "Input parameter is required" });
+    }
+
+    const suggestions = await searchPlaces(input);
+
+    res.json(suggestions);
+  } catch (error) {
+    console.error("Autocomplete error:", error);
+    res.status(500).json({ error: "Failed to fetch autocomplete suggestions" });
+  }
+});
+
+// Get place details by place ID
+router.get("/autocomplete/:placeId", async (req, res) => {
+  try {
+    const { placeId } = req.params;
+    const placeDetails = await getPlaceDetails(placeId);
+    res.json(placeDetails);
+  } catch (error) {
+    console.error("Place details error:", error);
+    res.status(500).json({ error: "Failed to fetch place details" });
+  }
+});
 
 // Public routes
 router.get("/", getAccommodationsValidation, getAccommodations);

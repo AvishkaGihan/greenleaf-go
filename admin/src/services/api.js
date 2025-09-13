@@ -98,6 +98,14 @@ export const accommodationAPI = {
   updateAccommodation: (id, data) =>
     api.put(`/api/v1/accommodations/${id}`, data),
   deleteAccommodation: (id) => api.delete(`/api/v1/accommodations/${id}`),
+
+  // Google Places autocomplete methods
+  getAutocompleteSuggestions: (input) =>
+    api.get(
+      `/api/v1/accommodations/autocomplete?input=${encodeURIComponent(input)}`
+    ),
+  getPlaceDetails: (placeId) =>
+    api.get(`/api/v1/accommodations/autocomplete/${placeId}`),
 };
 
 // Restaurant API calls

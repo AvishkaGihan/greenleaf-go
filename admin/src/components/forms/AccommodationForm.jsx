@@ -1,6 +1,101 @@
 import { useState, useEffect } from "react";
 import { uploadAPI } from "../../services/api";
 
+// Google Places Autocomplete Component
+const GooglePlacesAutocomplete = ({ onPlaceSelected }) => {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const searchPlaces = async (input) => {
+    if (input.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_BASE_URL
+        }/api/v1/accommodations/autocomplete?input=${encodeURIComponent(input)}`
+      );
+      const data = await response.json();
+      setSuggestions(data || []);
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error("Failed to fetch suggestions:", error);
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePlaceSelect = async (placeId, description) => {
+    setQuery(description);
+    setShowSuggestions(false);
+
+    try {
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_BASE_URL
+        }/api/v1/accommodations/autocomplete/${placeId}`
+      );
+      const placeDetails = await response.json();
+      onPlaceSelected(placeDetails);
+    } catch (error) {
+      console.error("Failed to fetch place details:", error);
+      alert("Failed to fetch place details. Please try again.");
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    searchPlaces(value);
+  };
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={query}
+        onChange={handleInputChange}
+        onFocus={() => query.length >= 3 && setShowSuggestions(true)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        placeholder="Start typing hotel name (e.g., 'Eco Lodge San Francisco')..."
+        className="w-full p-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+      />
+
+      {isLoading && (
+        <div className="absolute right-3 top-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          {suggestions.map((suggestion, index) => (
+            <div
+              key={index}
+              className="px-4 py-3 cursor-pointer hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+              onClick={() =>
+                handlePlaceSelect(suggestion.placeId, suggestion.description)
+              }
+            >
+              <div className="text-sm font-medium text-gray-900">
+                {suggestion.description}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -122,6 +217,56 @@ const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Google Places Autocomplete */}
+      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <label className="block text-sm font-medium text-blue-800 mb-2">
+          🔍 Search Hotel/Accommodation (Google Places)
+        </label>
+        <GooglePlacesAutocomplete
+          onPlaceSelected={async (placeDetails) => {
+            try {
+              console.log("Place details:", placeDetails);
+
+              // Auto-fill form with Google data
+              setFormData((prevData) => ({
+                ...prevData,
+                name: placeDetails.name || prevData.name,
+                address: placeDetails.address || prevData.address,
+                phone: placeDetails.phone || prevData.phone,
+                websiteUrl: placeDetails.website || prevData.websiteUrl,
+                starRating: placeDetails.rating
+                  ? Math.round(placeDetails.rating)
+                  : prevData.starRating,
+                energyEfficiencyScore:
+                  placeDetails.ecoScore || prevData.energyEfficiencyScore,
+                wasteManagementScore:
+                  placeDetails.ecoScore || prevData.wasteManagementScore,
+                waterConservationScore:
+                  placeDetails.ecoScore || prevData.waterConservationScore,
+                localSourcingScore:
+                  placeDetails.ecoScore || prevData.localSourcingScore,
+                carbonFootprintScore:
+                  placeDetails.ecoScore || prevData.carbonFootprintScore,
+                imageUrls: placeDetails.photos
+                  ? [...prevData.imageUrls, ...placeDetails.photos.slice(0, 3)]
+                  : prevData.imageUrls,
+              }));
+
+              alert(
+                `✅ Auto-filled data for "${placeDetails.name}" with eco score: ${placeDetails.ecoScore}/5`
+              );
+            } catch (error) {
+              console.error("Error processing place details:", error);
+              alert("Failed to process place details. Please try again.");
+            }
+          }}
+        />
+        <p className="text-sm text-blue-600 mt-2">
+          💡 Type a hotel name to auto-fill all fields with Google data and eco
+          scoring
+        </p>
+      </div>
+
       {/* Basic Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
