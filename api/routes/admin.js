@@ -14,6 +14,9 @@ import {
   getItineraryDetails,
   moderateItinerary,
   getItineraryAnalytics,
+  getRsvps,
+  cancelRsvpAdmin,
+  sendRsvpEmail,
 } from "../controllers/adminController.js";
 import { authenticateAdmin, logAdminAction } from "../middleware/auth.js";
 
@@ -41,5 +44,10 @@ router.get("/itineraries/analytics", getItineraryAnalytics);
 router.get("/itineraries", getItineraries);
 router.get("/itineraries/:id", getItineraryDetails);
 router.put("/itineraries/:id/moderate", moderateItinerary);
+
+// RSVP management
+router.get("/rsvps", getRsvps);
+router.delete("/rsvps/:rsvpId", cancelRsvpAdmin);
+router.post("/rsvps/:rsvpId/send-email", sendRsvpEmail);
 
 export default router;

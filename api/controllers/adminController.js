@@ -748,3 +748,172 @@ export const getItineraryAnalytics = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getRsvps = async (req, res, next) => {
+  try {
+    const { event, status, page = 1, limit = 20 } = req.query;
+
+    const query = {};
+
+    if (event) query.eventId = event;
+    if (status) query.status = status;
+
+    const skip = (page - 1) * limit;
+
+    const rsvps = await EventRSVP.find(query)
+      .populate("userId", "firstName lastName email")
+      .populate("eventId", "title")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await EventRSVP.countDocuments(query);
+
+    const formattedRsvps = rsvps.map((rsvp) => ({
+      id: rsvp._id,
+      event: rsvp.eventId?.title || "Unknown Event",
+      user: rsvp.userId
+        ? `${rsvp.userId.firstName} ${rsvp.userId.lastName}`
+        : "Unknown User",
+      email: rsvp.userId?.email || "No Email",
+      rsvpDate: rsvp.createdAt.toLocaleDateString(),
+      status: rsvp.status,
+      userId: rsvp.userId?._id,
+      eventId: rsvp.eventId?._id,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        rsvps: formattedRsvps,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelRsvpAdmin = async (req, res, next) => {
+  try {
+    const { rsvpId } = req.params;
+
+    const rsvp = await EventRSVP.findByIdAndUpdate(
+      rsvpId,
+      { status: "cancelled" },
+      { new: true }
+    );
+
+    if (!rsvp) {
+      throw new AppError("RSVP not found", 404, "NOT_FOUND");
+    }
+
+    res.json({
+      success: true,
+      message: "RSVP cancelled successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const sendRsvpEmail = async (req, res, next) => {
+  try {
+    const { rsvpId } = req.params;
+    const { emailType, customSubject, customMessage } = req.body;
+
+    // Get RSVP with populated user and event data
+    const rsvp = await EventRSVP.findById(rsvpId)
+      .populate("userId", "firstName lastName email")
+      .populate("eventId", "title startDate location");
+
+    if (!rsvp) {
+      throw new AppError("RSVP not found", 404, "NOT_FOUND");
+    }
+
+    if (!rsvp.userId || !rsvp.eventId) {
+      throw new AppError("RSVP data incomplete", 400, "BAD_REQUEST");
+    }
+
+    const {
+      sendRsvpConfirmation,
+      sendRsvpReminder,
+      sendRsvpCancellation,
+      sendCustomRsvpEmail,
+    } = await import("../services/emailService.js");
+
+    let success = false;
+
+    const userName = rsvp.userId
+      ? `${rsvp.userId.firstName} ${rsvp.userId.lastName}`
+      : "User";
+
+    switch (emailType) {
+      case "confirmation":
+        success = await sendRsvpConfirmation({
+          to: rsvp.userId.email,
+          userName,
+          eventTitle: rsvp.eventId.title,
+          eventDate: rsvp.eventId.startDate,
+          eventLocation: rsvp.eventId.location?.address || "TBD",
+        });
+        break;
+
+      case "reminder":
+        success = await sendRsvpReminder({
+          to: rsvp.userId.email,
+          userName,
+          eventTitle: rsvp.eventId.title,
+          eventDate: rsvp.eventId.startDate,
+          eventLocation: rsvp.eventId.location?.address || "TBD",
+        });
+        break;
+
+      case "cancellation":
+        success = await sendRsvpCancellation({
+          to: rsvp.userId.email,
+          userName,
+          eventTitle: rsvp.eventId.title,
+          eventDate: rsvp.eventId.startDate,
+        });
+        break;
+
+      case "custom":
+        if (!customSubject || !customMessage) {
+          throw new AppError(
+            "Custom subject and message required",
+            400,
+            "BAD_REQUEST"
+          );
+        }
+        success = await sendCustomRsvpEmail({
+          to: rsvp.userId.email,
+          userName,
+          eventTitle: rsvp.eventId.title,
+          subject: customSubject,
+          message: customMessage,
+        });
+        break;
+
+      default:
+        throw new AppError("Invalid email type", 400, "BAD_REQUEST");
+    }
+
+    if (!success) {
+      throw new AppError("Failed to send email", 500, "INTERNAL_ERROR");
+    }
+
+    res.json({
+      success: true,
+      message: `${emailType} email sent successfully to ${rsvp.userId.email}`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

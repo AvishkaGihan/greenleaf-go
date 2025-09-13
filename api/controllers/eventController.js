@@ -263,7 +263,16 @@ export const rsvpEvent = async (req, res, next) => {
 export const cancelRsvp = async (req, res, next) => {
   try {
     const eventId = req.params.id;
-    const userId = req.user._id;
+    let userId = req.user._id;
+
+    // If admin is canceling a specific RSVP, allow it
+    if (req.user.role === "admin" && req.body.rsvpId) {
+      const rsvp = await EventRSVP.findById(req.body.rsvpId);
+      if (!rsvp) {
+        throw new AppError("RSVP not found", 404, "NOT_FOUND");
+      }
+      userId = rsvp.userId;
+    }
 
     const rsvp = await EventRSVP.findOneAndUpdate(
       { eventId, userId },
