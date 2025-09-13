@@ -2,6 +2,7 @@ import express from "express";
 const router = express.Router();
 import {
   getBadges,
+  getAllBadges,
   getUserBadges,
   createBadge,
   updateBadge,
@@ -21,6 +22,7 @@ router.get("/next", authenticate, getNextBadges);
 router.get("/:id/progress", authenticate, getBadgeProgress);
 
 // Admin routes
+router.get("/admin", authenticateAdmin, getAllBadges);
 router.post("/", authenticateAdmin, createBadge);
 router.put("/:id", authenticateAdmin, updateBadge);
 router.delete("/:id", authenticateAdmin, deleteBadge);

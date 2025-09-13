@@ -61,6 +61,55 @@ export const getBadges = async (req, res, next) => {
   }
 };
 
+export const getAllBadges = async (req, res, next) => {
+  try {
+    const { category, rarity } = req.query;
+
+    const query = {};
+    if (category) query.category = category;
+    if (rarity) query.rarity = rarity;
+
+    const badges = await EcoBadge.find(query).sort({
+      requirementsThreshold: 1,
+    });
+
+    // Get count of users who earned each badge
+    const earnedCounts = await UserBadge.aggregate([
+      { $group: { _id: "$badgeId", count: { $sum: 1 } } },
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        badges: badges.map((badge) => {
+          const earnedCount =
+            earnedCounts.find(
+              (ec) => ec._id.toString() === badge._id.toString()
+            )?.count || 0;
+
+          return {
+            _id: badge._id,
+            name: badge.name,
+            description: badge.description,
+            emoji: badge.emoji,
+            category: badge.category,
+            requirementsType: badge.requirementsType,
+            requirementsThreshold: badge.requirementsThreshold,
+            pointsReward: badge.pointsReward,
+            rarity: badge.rarity,
+            isActive: badge.isActive,
+            earnedBy: earnedCount,
+            createdAt: badge.createdAt,
+            updatedAt: badge.updatedAt,
+          };
+        }),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getUserBadges = async (req, res, next) => {
   try {
     const userBadges = await UserBadge.find({ userId: req.user._id })

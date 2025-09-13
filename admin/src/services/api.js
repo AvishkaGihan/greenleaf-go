@@ -135,7 +135,7 @@ export const eventAPI = {
 
 // Badge API calls
 export const badgeAPI = {
-  getBadges: () => api.get("/api/v1/badges"),
+  getBadges: () => api.get("/api/v1/badges/admin"),
   createBadge: (data) => api.post("/api/v1/badges", data),
   updateBadge: (id, data) => api.put(`/api/v1/badges/${id}`, data),
   deleteBadge: (id) => api.delete(`/api/v1/badges/${id}`),
