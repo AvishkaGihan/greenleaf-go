@@ -96,9 +96,9 @@ const EcoScoreDisplay = ({
             Eco scores will be automatically calculated from Google reviews when
             this accommodation is saved with a Google Place ID.
           </p>
-          {showRecalculateButton && (
+          {showRecalculateButton && accommodation?.id && (
             <button
-              onClick={() => onRecalculate?.(accommodation?.id)}
+              onClick={() => onRecalculate?.(accommodation.id)}
               disabled={isRecalculating}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >

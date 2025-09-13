@@ -241,8 +241,8 @@ const getAccommodationsValidation = [
         return true; // Allow empty/missing values
       }
       const num = parseInt(value, 10);
-      if (isNaN(num) || num < 1 || num > 50) {
-        throw new Error("Limit must be between 1-50");
+      if (isNaN(num) || num < 1 || num > 200) {
+        throw new Error("Limit must be between 1-200");
       }
       return true;
     })
@@ -276,9 +276,16 @@ const getAccommodationReviewsValidation = [
   handleValidationErrors,
 ];
 
+const recalculateEcoScoresValidation = [
+  param("id").isMongoId().withMessage("Invalid accommodation ID"),
+
+  handleValidationErrors,
+];
+
 export {
   accommodationValidation,
   updateAccommodationValidation,
   getAccommodationsValidation,
   getAccommodationReviewsValidation,
+  recalculateEcoScoresValidation,
 };

@@ -16,6 +16,7 @@ import {
   updateAccommodationValidation,
   getAccommodationsValidation,
   getAccommodationReviewsValidation,
+  recalculateEcoScoresValidation,
 } from "../middleware/validation/accommodationValidation.js";
 import {
   getPlaceDetails,
@@ -79,6 +80,7 @@ router.delete("/:id", authenticateAdmin, deleteAccommodation);
 router.post(
   "/:id/recalculate-eco-scores",
   authenticateAdmin,
+  recalculateEcoScoresValidation,
   recalculateEcoScores
 );
 router.post(
