@@ -18,6 +18,7 @@ import Rsvps from "./components/screens/Rsvps";
 import Itineraries from "./components/screens/Itineraries";
 import Badges from "./components/screens/Badges";
 import Reviews from "./components/screens/Reviews";
+import EcoScoreManagement from "./components/screens/EcoScoreManagement";
 
 function App() {
   return (
@@ -138,6 +139,17 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <Reviews />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/eco-scores"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <EcoScoreManagement />
                 </MainLayout>
               </ProtectedRoute>
             }

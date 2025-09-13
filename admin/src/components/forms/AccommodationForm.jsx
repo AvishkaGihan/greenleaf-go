@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { uploadAPI } from "../../services/api";
+import EcoScoreDisplay from "../common/EcoScoreDisplay";
 
 // Google Places Autocomplete Component
 const GooglePlacesAutocomplete = ({ onPlaceSelected }) => {
@@ -96,7 +97,13 @@ const GooglePlacesAutocomplete = ({ onPlaceSelected }) => {
   );
 };
 
-const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
+const AccommodationForm = ({
+  initialData,
+  onSubmit,
+  onCancel,
+  isLoading,
+  onRecalculateEcoScores,
+}) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -116,11 +123,7 @@ const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     priceRange: "$",
     checkInTime: "15:00",
     checkOutTime: "11:00",
-    energyEfficiencyScore: 1,
-    wasteManagementScore: 1,
-    waterConservationScore: 1,
-    localSourcingScore: 1,
-    carbonFootprintScore: 1,
+    googlePlaceId: "", // New field for Google Place ID
     amenities: [],
     certifications: [],
     imageUrls: [],
@@ -129,6 +132,7 @@ const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   });
 
   const [imageUploading, setImageUploading] = useState(false);
+  const [coordinatesAutoFilled, setCoordinatesAutoFilled] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -138,15 +142,38 @@ const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         certifications: initialData.certifications || [],
         imageUrls: initialData.imageUrls || [],
       });
+
+      // Check if coordinates were auto-filled from Google Places
+      if (
+        initialData.latitude &&
+        initialData.longitude &&
+        initialData.ecoScoreMetadata?.googlePlaceId
+      ) {
+        setCoordinatesAutoFilled(true);
+      }
     }
   }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const newValue = type === "checkbox" ? checked : value;
+
+    setFormData((prev) => {
+      const updatedData = {
+        ...prev,
+        [name]: newValue,
+      };
+
+      // If googlePlaceId is cleared or changed, make coordinates editable again
+      if (
+        name === "googlePlaceId" &&
+        (!newValue || newValue !== prev.googlePlaceId)
+      ) {
+        setCoordinatesAutoFilled(false);
+      }
+
+      return updatedData;
+    });
   };
 
   const handleArrayChange = (name, value) => {
@@ -196,15 +223,10 @@ const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Prepare data for submission
+    // Prepare data for submission - remove eco scores as they're auto-calculated
     const submitData = {
       ...formData,
       starRating: parseInt(formData.starRating),
-      energyEfficiencyScore: parseInt(formData.energyEfficiencyScore),
-      wasteManagementScore: parseInt(formData.wasteManagementScore),
-      waterConservationScore: parseInt(formData.waterConservationScore),
-      localSourcingScore: parseInt(formData.localSourcingScore),
-      carbonFootprintScore: parseInt(formData.carbonFootprintScore),
     };
 
     if (formData.latitude && formData.longitude) {
@@ -237,23 +259,30 @@ const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 starRating: placeDetails.rating
                   ? Math.round(placeDetails.rating)
                   : prevData.starRating,
-                energyEfficiencyScore:
-                  placeDetails.ecoScore || prevData.energyEfficiencyScore,
-                wasteManagementScore:
-                  placeDetails.ecoScore || prevData.wasteManagementScore,
-                waterConservationScore:
-                  placeDetails.ecoScore || prevData.waterConservationScore,
-                localSourcingScore:
-                  placeDetails.ecoScore || prevData.localSourcingScore,
-                carbonFootprintScore:
-                  placeDetails.ecoScore || prevData.carbonFootprintScore,
+                googlePlaceId: placeDetails.placeId || prevData.googlePlaceId,
                 imageUrls: placeDetails.photos
                   ? [...prevData.imageUrls, ...placeDetails.photos.slice(0, 3)]
                   : prevData.imageUrls,
+                // Auto-populate coordinates from Google Places
+                latitude:
+                  placeDetails.coordinates?.latitude || prevData.latitude,
+                longitude:
+                  placeDetails.coordinates?.longitude || prevData.longitude,
               }));
 
+              // Mark coordinates as auto-filled if they were populated from Google
+              if (placeDetails.coordinates) {
+                setCoordinatesAutoFilled(true);
+              }
+
+              const coordinateMessage = placeDetails.coordinates
+                ? ` Coordinates: ${placeDetails.coordinates.latitude.toFixed(
+                    6
+                  )}, ${placeDetails.coordinates.longitude.toFixed(6)}`
+                : "";
+
               alert(
-                `✅ Auto-filled data for "${placeDetails.name}" with eco score: ${placeDetails.ecoScore}/5`
+                `✅ Auto-filled data for "${placeDetails.name}" with eco score: ${placeDetails.ecoScore}/5${coordinateMessage}`
               );
             } catch (error) {
               console.error("Error processing place details:", error);
@@ -391,7 +420,12 @@ const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Latitude
+              Latitude{" "}
+              {coordinatesAutoFilled && (
+                <span className="text-green-600 text-xs">
+                  (Auto-filled from Google)
+                </span>
+              )}
             </label>
             <input
               type="number"
@@ -399,13 +433,21 @@ const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
               name="latitude"
               value={formData.latitude}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              readOnly={coordinatesAutoFilled}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                coordinatesAutoFilled ? "bg-gray-50 text-gray-600" : ""
+              }`}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Longitude
+              Longitude{" "}
+              {coordinatesAutoFilled && (
+                <span className="text-green-600 text-xs">
+                  (Auto-filled from Google)
+                </span>
+              )}
             </label>
             <input
               type="number"
@@ -413,7 +455,10 @@ const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
               name="longitude"
               value={formData.longitude}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              readOnly={coordinatesAutoFilled}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                coordinatesAutoFilled ? "bg-gray-50 text-gray-600" : ""
+              }`}
             />
           </div>
         </div>
@@ -550,38 +595,27 @@ const AccommodationForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         </div>
       </div>
 
-      {/* Eco-Rating Scores */}
+      {/* Eco-Rating Scores - Auto-calculated Display */}
       <div className="border-t pt-4">
         <h3 className="text-lg font-medium text-gray-900 mb-3">
-          Eco-Rating Scores (1-5)
+          Eco-Rating Scores (Auto-calculated)
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { name: "energyEfficiencyScore", label: "Energy Efficiency" },
-            { name: "wasteManagementScore", label: "Waste Management" },
-            { name: "waterConservationScore", label: "Water Conservation" },
-            { name: "localSourcingScore", label: "Local Sourcing" },
-            { name: "carbonFootprintScore", label: "Carbon Footprint" },
-          ].map(({ name, label }) => (
-            <div key={name}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {label}
-              </label>
-              <select
-                name={name}
-                value={formData[name]}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <option key={num} value={num}>
-                    {num}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
+        <EcoScoreDisplay
+          accommodation={initialData}
+          onRecalculate={onRecalculateEcoScores}
+          isRecalculating={false}
+          showRecalculateButton={!!initialData?.id}
+        />
+        {!initialData?.id && (
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700">
+              💡 <strong>Eco scores will be automatically calculated</strong>{" "}
+              when you save this accommodation with a Google Place ID. The
+              system will analyze reviews from Google Places to determine scores
+              for each category.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Amenities & Features */}

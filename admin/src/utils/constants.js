@@ -33,6 +33,12 @@ export const MENU_ITEMS = [
   },
   { id: "badges", label: "Badges", icon: "fas fa-award", path: "/badges" },
   { id: "reviews", label: "Reviews", icon: "fas fa-star", path: "/reviews" },
+  {
+    id: "eco-scores",
+    label: "Eco Scores",
+    icon: "fas fa-leaf",
+    path: "/eco-scores",
+  },
 ];
 
 export const ACCOMMODATION_TYPES = [

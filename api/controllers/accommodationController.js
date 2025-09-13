@@ -2,6 +2,11 @@ import Accommodation from "../models/Accommodation.js";
 import Review from "../models/Review.js";
 import { AppError } from "../utils/errorHandler.js";
 import { calculateDistance } from "../services/geoService.js";
+import {
+  getPlaceDetails,
+  analyzeEcoScores,
+  getDefaultEcoScores,
+} from "../services/ecoScoreFromGoogle.js";
 
 export const getAccommodations = async (req, res, next) => {
   try {
@@ -233,6 +238,95 @@ export const createAccommodation = async (req, res, next) => {
       };
     }
 
+    // Calculate eco scores automatically if Google Place ID is provided
+    if (accommodationData.googlePlaceId) {
+      console.log(
+        `Calculating eco scores for Google Place ID: ${accommodationData.googlePlaceId}`
+      );
+
+      try {
+        const placeDetails = await getPlaceDetails(
+          accommodationData.googlePlaceId
+        );
+
+        // Set eco scores from Google analysis
+        if (placeDetails.ecoScores) {
+          Object.assign(accommodationData, placeDetails.ecoScores);
+          console.log(`Successfully calculated eco scores from Google Places`);
+        }
+
+        // Set metadata
+        accommodationData.ecoScoreMetadata = {
+          ...placeDetails.ecoScoreMetadata,
+          googlePlaceId: accommodationData.googlePlaceId,
+        };
+
+        // Fill in other details from Google if not provided
+        if (!accommodationData.name && placeDetails.name) {
+          accommodationData.name = placeDetails.name;
+        }
+        if (!accommodationData.address && placeDetails.address) {
+          accommodationData.address = placeDetails.address;
+        }
+        if (!accommodationData.phone && placeDetails.phone) {
+          accommodationData.phone = placeDetails.phone;
+        }
+        if (!accommodationData.websiteUrl && placeDetails.website) {
+          accommodationData.websiteUrl = placeDetails.website;
+        }
+        if (!accommodationData.imageUrls && placeDetails.photos?.length > 0) {
+          accommodationData.imageUrls = placeDetails.photos;
+        }
+
+        // Auto-populate coordinates from Google Places if not manually provided
+        if (
+          placeDetails.coordinates &&
+          (!accommodationData.latitude || !accommodationData.longitude)
+        ) {
+          accommodationData.latitude = placeDetails.coordinates.latitude;
+          accommodationData.longitude = placeDetails.coordinates.longitude;
+          console.log(
+            `Auto-populated coordinates from Google Places: ${accommodationData.latitude}, ${accommodationData.longitude}`
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching Google Place details:", error);
+
+        // Use default scores if Google Places fails, but keep the place ID for future attempts
+        const defaultEcoData = getDefaultEcoScores(
+          accommodationData.type || "hotel"
+        );
+        Object.assign(accommodationData, defaultEcoData.scores);
+        accommodationData.ecoScoreMetadata = {
+          ...defaultEcoData.metadata,
+          googlePlaceId: accommodationData.googlePlaceId,
+          error: error.message,
+          lastErrorAt: new Date(),
+        };
+
+        // Log the error but don't fail the accommodation creation
+        console.warn(
+          `Using default eco scores due to Google Places error: ${error.message}`
+        );
+      }
+    } else {
+      console.log("No Google Place ID provided, using default eco scores");
+
+      // Use default scores if no Google Place ID provided
+      const defaultEcoData = getDefaultEcoScores(
+        accommodationData.type || "hotel"
+      );
+      Object.assign(accommodationData, defaultEcoData.scores);
+      accommodationData.ecoScoreMetadata = defaultEcoData.metadata;
+    }
+
+    // Remove any manually provided eco scores from request body
+    delete accommodationData.energyEfficiencyScore;
+    delete accommodationData.wasteManagementScore;
+    delete accommodationData.waterConservationScore;
+    delete accommodationData.localSourcingScore;
+    delete accommodationData.carbonFootprintScore;
+
     const accommodation = new Accommodation({
       ...accommodationData,
       createdBy: req.user._id,
@@ -393,6 +487,193 @@ export const getAccommodationReviews = async (req, res, next) => {
             },
           ]).then((result) => result[0]?.average || 0),
         },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Recalculate eco scores for an accommodation
+export const recalculateEcoScores = async (req, res, next) => {
+  try {
+    const accommodation = await Accommodation.findById(req.params.id);
+
+    if (!accommodation) {
+      throw new AppError("Accommodation not found", 404, "NOT_FOUND");
+    }
+
+    let ecoData;
+
+    // Try to recalculate from Google Places if we have a Place ID
+    if (accommodation.ecoScoreMetadata?.googlePlaceId) {
+      try {
+        const placeDetails = await getPlaceDetails(
+          accommodation.ecoScoreMetadata.googlePlaceId
+        );
+        ecoData = {
+          scores: placeDetails.ecoScores,
+          metadata: {
+            ...placeDetails.ecoScoreMetadata,
+            googlePlaceId: accommodation.ecoScoreMetadata.googlePlaceId,
+          },
+        };
+
+        // Also update coordinates if available from Google Places and not manually set
+        const updateData = {
+          ...ecoData.scores,
+          ecoScoreMetadata: ecoData.metadata,
+        };
+
+        if (
+          placeDetails.coordinates &&
+          (!accommodation.latitude || !accommodation.longitude)
+        ) {
+          updateData.latitude = placeDetails.coordinates.latitude;
+          updateData.longitude = placeDetails.coordinates.longitude;
+          console.log(
+            `Auto-updated coordinates from Google Places: ${updateData.latitude}, ${updateData.longitude}`
+          );
+        }
+
+        // Update the accommodation with new scores and coordinates
+        const updatedAccommodation = await Accommodation.findByIdAndUpdate(
+          req.params.id,
+          updateData,
+          { new: true, runValidators: true }
+        );
+
+        res.json({
+          success: true,
+          message: "Eco scores recalculated successfully",
+          data: {
+            accommodation: updatedAccommodation,
+            previousMetadata: accommodation.ecoScoreMetadata,
+            newMetadata: ecoData.metadata,
+            coordinatesUpdated: placeDetails.coordinates ? true : false,
+          },
+        });
+        return;
+      } catch (error) {
+        console.error("Error recalculating from Google Places:", error);
+        // Fall back to default scores
+        ecoData = getDefaultEcoScores(accommodation.type || "hotel");
+        ecoData.metadata.googlePlaceId =
+          accommodation.ecoScoreMetadata.googlePlaceId;
+      }
+    } else {
+      // Use default scores if no Google Place ID
+      ecoData = getDefaultEcoScores(accommodation.type || "hotel");
+    }
+
+    // Update the accommodation with new scores (fallback case)
+    const updatedAccommodation = await Accommodation.findByIdAndUpdate(
+      req.params.id,
+      {
+        ...ecoData.scores,
+        ecoScoreMetadata: ecoData.metadata,
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      success: true,
+      message: "Eco scores recalculated successfully",
+      data: {
+        accommodation: updatedAccommodation,
+        previousMetadata: accommodation.ecoScoreMetadata,
+        newMetadata: ecoData.metadata,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Batch recalculate eco scores for multiple accommodations
+export const batchRecalculateEcoScores = async (req, res, next) => {
+  try {
+    const { accommodationIds, force = false } = req.body;
+
+    let query = { isActive: true };
+
+    if (accommodationIds && accommodationIds.length > 0) {
+      query._id = { $in: accommodationIds };
+    } else if (!force) {
+      // Only recalculate accommodations with low confidence or old scores
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      query.$or = [
+        { "ecoScoreMetadata.confidenceLevel": { $lt: 3 } },
+        { "ecoScoreMetadata.lastCalculated": { $lt: oneWeekAgo } },
+        { "ecoScoreMetadata.lastCalculated": null },
+      ];
+    }
+
+    const accommodations = await Accommodation.find(query).limit(50); // Process in batches
+    const results = [];
+
+    for (const accommodation of accommodations) {
+      try {
+        let ecoData;
+
+        if (accommodation.ecoScoreMetadata?.googlePlaceId) {
+          try {
+            const placeDetails = await getPlaceDetails(
+              accommodation.ecoScoreMetadata.googlePlaceId
+            );
+            ecoData = {
+              scores: placeDetails.ecoScores,
+              metadata: {
+                ...placeDetails.ecoScoreMetadata,
+                googlePlaceId: accommodation.ecoScoreMetadata.googlePlaceId,
+              },
+            };
+          } catch (error) {
+            console.error(
+              `Error recalculating for ${accommodation._id}:`,
+              error
+            );
+            ecoData = getDefaultEcoScores(accommodation.type || "hotel");
+            ecoData.metadata.googlePlaceId =
+              accommodation.ecoScoreMetadata.googlePlaceId;
+          }
+        } else {
+          ecoData = getDefaultEcoScores(accommodation.type || "hotel");
+        }
+
+        await Accommodation.findByIdAndUpdate(accommodation._id, {
+          ...ecoData.scores,
+          ecoScoreMetadata: ecoData.metadata,
+        });
+
+        results.push({
+          accommodationId: accommodation._id,
+          name: accommodation.name,
+          status: "success",
+          confidenceLevel: ecoData.metadata.confidenceLevel,
+          reviewsAnalyzed: ecoData.metadata.reviewsAnalyzed,
+        });
+
+        // Add delay to respect API rate limits
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch (error) {
+        results.push({
+          accommodationId: accommodation._id,
+          name: accommodation.name,
+          status: "error",
+          error: error.message,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Processed ${results.length} accommodations`,
+      data: {
+        totalProcessed: results.length,
+        successful: results.filter((r) => r.status === "success").length,
+        failed: results.filter((r) => r.status === "error").length,
+        results,
       },
     });
   } catch (error) {

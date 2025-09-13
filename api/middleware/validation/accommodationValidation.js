@@ -63,30 +63,10 @@ const accommodationValidation = [
     .isIn(["$", "$$", "$$$", "$$$$"])
     .withMessage("Price range must be one of: $, $$, $$$, $$$$"),
 
-  body("energyEfficiencyScore")
+  body("googlePlaceId")
     .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Energy efficiency score must be between 1-5"),
-
-  body("wasteManagementScore")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Waste management score must be between 1-5"),
-
-  body("waterConservationScore")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Water conservation score must be between 1-5"),
-
-  body("localSourcingScore")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Local sourcing score must be between 1-5"),
-
-  body("carbonFootprintScore")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Carbon footprint score must be between 1-5"),
+    .isString()
+    .withMessage("Google Place ID must be a string"),
 
   body("amenities")
     .optional()

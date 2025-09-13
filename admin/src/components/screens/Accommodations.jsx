@@ -133,9 +133,46 @@ const Accommodations = () => {
     }
   };
 
-  const formatEcoRating = (rating) => {
+  const formatEcoRating = (accommodation) => {
+    const rating = accommodation.ecoRating;
+    const confidence = accommodation.ecoScoreMetadata?.confidenceLevel || 1;
+    const lastCalculated = accommodation.ecoScoreMetadata?.lastCalculated;
+
     if (!rating) return "N/A";
-    return `${rating.toFixed(1)}/5 🌱`;
+
+    const getConfidenceColor = (level) => {
+      if (level >= 4) return "text-green-600";
+      if (level >= 3) return "text-yellow-600";
+      if (level >= 2) return "text-orange-600";
+      return "text-red-600";
+    };
+
+    const getConfidenceText = (level) => {
+      if (level >= 4) return "High";
+      if (level >= 3) return "Med";
+      if (level >= 2) return "Low";
+      return "Very Low";
+    };
+
+    const formatDate = (dateString) => {
+      if (!dateString) return "Never";
+      return new Date(dateString).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    };
+
+    return (
+      <div className="text-sm">
+        <div className="font-medium">{rating.toFixed(1)}/5 🌱</div>
+        <div className={`text-xs ${getConfidenceColor(confidence)}`}>
+          {getConfidenceText(confidence)} confidence
+        </div>
+        <div className="text-xs text-gray-500">
+          {formatDate(lastCalculated)}
+        </div>
+      </div>
+    );
   };
 
   const formatStatus = (accommodation) => {
@@ -180,7 +217,7 @@ const Accommodations = () => {
             accommodation.type?.charAt(0).toUpperCase() +
             accommodation.type?.slice(1),
         },
-        { content: formatEcoRating(accommodation.ecoRating) },
+        { content: formatEcoRating(accommodation) },
         { content: accommodation.priceRange },
         { content: formatStatus(accommodation) },
         {

@@ -106,6 +106,12 @@ export const accommodationAPI = {
     ),
   getPlaceDetails: (placeId) =>
     api.get(`/api/v1/accommodations/autocomplete/${placeId}`),
+
+  // Eco score management methods
+  recalculateEcoScores: (id) =>
+    api.post(`/api/v1/accommodations/${id}/recalculate-eco-scores`),
+  batchRecalculateEcoScores: (data) =>
+    api.post("/api/v1/accommodations/batch-recalculate-eco-scores", data),
 };
 
 // Restaurant API calls

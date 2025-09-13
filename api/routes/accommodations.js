@@ -7,6 +7,8 @@ import {
   updateAccommodation,
   deleteAccommodation,
   getAccommodationReviews,
+  recalculateEcoScores,
+  batchRecalculateEcoScores,
 } from "../controllers/accommodationController.js";
 import { authenticateAdmin } from "../middleware/auth.js";
 import {
@@ -72,5 +74,17 @@ router.put(
   updateAccommodation
 );
 router.delete("/:id", authenticateAdmin, deleteAccommodation);
+
+// Eco score management routes (admin only)
+router.post(
+  "/:id/recalculate-eco-scores",
+  authenticateAdmin,
+  recalculateEcoScores
+);
+router.post(
+  "/batch-recalculate-eco-scores",
+  authenticateAdmin,
+  batchRecalculateEcoScores
+);
 
 export default router;
