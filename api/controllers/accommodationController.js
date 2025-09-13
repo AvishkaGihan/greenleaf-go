@@ -227,6 +227,13 @@ export const createAccommodation = async (req, res, next) => {
   try {
     const accommodationData = req.body;
 
+    // Remove any manually provided eco scores from request body to prevent tampering
+    delete accommodationData.energyEfficiencyScore;
+    delete accommodationData.wasteManagementScore;
+    delete accommodationData.waterConservationScore;
+    delete accommodationData.localSourcingScore;
+    delete accommodationData.carbonFootprintScore;
+
     // Add location if coordinates provided
     if (accommodationData.latitude && accommodationData.longitude) {
       accommodationData.location = {
@@ -240,10 +247,6 @@ export const createAccommodation = async (req, res, next) => {
 
     // Calculate eco scores automatically if Google Place ID is provided
     if (accommodationData.googlePlaceId) {
-      console.log(
-        `Calculating eco scores for Google Place ID: ${accommodationData.googlePlaceId}`
-      );
-
       try {
         const placeDetails = await getPlaceDetails(
           accommodationData.googlePlaceId
@@ -252,7 +255,6 @@ export const createAccommodation = async (req, res, next) => {
         // Set eco scores from Google analysis
         if (placeDetails.ecoScores) {
           Object.assign(accommodationData, placeDetails.ecoScores);
-          console.log(`Successfully calculated eco scores from Google Places`);
         }
 
         // Set metadata
@@ -285,9 +287,6 @@ export const createAccommodation = async (req, res, next) => {
         ) {
           accommodationData.latitude = placeDetails.coordinates.latitude;
           accommodationData.longitude = placeDetails.coordinates.longitude;
-          console.log(
-            `Auto-populated coordinates from Google Places: ${accommodationData.latitude}, ${accommodationData.longitude}`
-          );
         }
       } catch (error) {
         console.error("Error fetching Google Place details:", error);
@@ -310,8 +309,6 @@ export const createAccommodation = async (req, res, next) => {
         );
       }
     } else {
-      console.log("No Google Place ID provided, using default eco scores");
-
       // Use default scores if no Google Place ID provided
       const defaultEcoData = getDefaultEcoScores(
         accommodationData.type || "hotel"
@@ -319,13 +316,6 @@ export const createAccommodation = async (req, res, next) => {
       Object.assign(accommodationData, defaultEcoData.scores);
       accommodationData.ecoScoreMetadata = defaultEcoData.metadata;
     }
-
-    // Remove any manually provided eco scores from request body
-    delete accommodationData.energyEfficiencyScore;
-    delete accommodationData.wasteManagementScore;
-    delete accommodationData.waterConservationScore;
-    delete accommodationData.localSourcingScore;
-    delete accommodationData.carbonFootprintScore;
 
     const accommodation = new Accommodation({
       ...accommodationData,
@@ -340,6 +330,7 @@ export const createAccommodation = async (req, res, next) => {
       data: accommodation,
     });
   } catch (error) {
+    console.error("Error in createAccommodation:", error);
     next(error);
   }
 };
