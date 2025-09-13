@@ -146,7 +146,12 @@ const AccommodationForm = ({
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === "checkbox" ? checked : value;
+    let newValue = type === "checkbox" ? checked : value;
+
+    // For phone field, remove any spaces
+    if (name === "phone") {
+      newValue = newValue.replace(/\s/g, "");
+    }
 
     setFormData((prev) => {
       const updatedData = {
@@ -226,6 +231,8 @@ const AccommodationForm = ({
     if (!formData.country.trim()) newErrors.country = "Country is required";
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Invalid email format";
+    if (formData.phone && !/^[+]?[\d\-()]{7,20}$/.test(formData.phone))
+      newErrors.phone = "Please provide a valid phone number";
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
@@ -261,7 +268,10 @@ const AccommodationForm = ({
                 ...prevData,
                 name: placeDetails.name || prevData.name,
                 address: placeDetails.address || prevData.address,
-                phone: placeDetails.phone || prevData.phone,
+                phone: (placeDetails.phone || prevData.phone).replace(
+                  /\s/g,
+                  ""
+                ),
                 websiteUrl: placeDetails.website || prevData.websiteUrl,
                 starRating: placeDetails.rating
                   ? Math.round(placeDetails.rating)
@@ -489,8 +499,11 @@ const AccommodationForm = ({
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                errors.phone ? "border-red-500" : "border-gray-300"
+              }`}
             />
+            <FormError error={errors.phone} />
           </div>
 
           <div>
