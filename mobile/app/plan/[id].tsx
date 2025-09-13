@@ -286,13 +286,6 @@ export default function ItineraryDetailsScreen() {
             >
               {itinerary.title || `${itinerary.destinationCity} Trip`}
             </Text>
-            <TouchableOpacity className="ml-4">
-              <Ionicons
-                name={itinerary.isFavorite ? "heart" : "heart-outline"}
-                size={24}
-                color={itinerary.isFavorite ? "#ef4444" : "#6b7280"}
-              />
-            </TouchableOpacity>
           </View>
         </View>
 
