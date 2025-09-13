@@ -12,92 +12,121 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import { useAuth } from "../contexts/AuthContext";
 import type { RegisterData } from "../types";
 
 export default function SignUpScreen() {
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    phone: "",
-    dateOfBirth: "",
-  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const { register, isLoading } = useAuth();
 
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
+  const validationSchema = Yup.object({
+    firstName: Yup.string()
+      .required("First name is required")
+      .max(100, "First name must be less than 100 characters")
+      .matches(
+        /^[a-zA-Z\s\-']+$/,
+        "First name can only contain letters, spaces, hyphens, and apostrophes"
+      ),
+    lastName: Yup.string()
+      .required("Last name is required")
+      .max(100, "Last name must be less than 100 characters")
+      .matches(
+        /^[a-zA-Z\s\-']+$/,
+        "Last name can only contain letters, spaces, hyphens, and apostrophes"
+      ),
+    email: Yup.string()
+      .required("Email is required")
+      .email("Please provide a valid email address")
+      .max(255, "Email must be less than 255 characters"),
+    password: Yup.string()
+      .required("Password is required")
+      .min(8, "Password must be at least 8 characters long")
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Password must contain at least one lowercase letter, one uppercase letter, and one number"
+      ),
+    confirmPassword: Yup.string()
+      .required("Please confirm your password")
+      .oneOf([Yup.ref("password")], "Passwords do not match"),
+    phone: Yup.string().matches(
+      /^\+?[\d\s\-\(\)]+$/,
+      "Please provide a valid phone number"
+    ),
+    dateOfBirth: Yup.string(),
+  });
 
-    // First name validation
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
-    } else if (formData.firstName.length > 100) {
-      newErrors.firstName = "First name must be less than 100 characters";
-    } else if (!/^[a-zA-Z\s\-']+$/.test(formData.firstName)) {
-      newErrors.firstName =
-        "First name can only contain letters, spaces, hyphens, and apostrophes";
-    }
+  const formik = useFormik({
+    initialValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      phone: "",
+      dateOfBirth: "",
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      try {
+        const userData: RegisterData = {
+          firstName: values.firstName.trim(),
+          lastName: values.lastName.trim(),
+          email: values.email.trim().toLowerCase(),
+          password: values.password,
+          phone: values.phone.trim() || undefined,
+          dateOfBirth: values.dateOfBirth || undefined,
+          preferredLanguage: "en",
+          currency: "USD",
+        };
 
-    // Last name validation
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
-    } else if (formData.lastName.length > 100) {
-      newErrors.lastName = "Last name must be less than 100 characters";
-    } else if (!/^[a-zA-Z\s\-']+$/.test(formData.lastName)) {
-      newErrors.lastName =
-        "Last name can only contain letters, spaces, hyphens, and apostrophes";
-    }
+        await register(userData);
 
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please provide a valid email address";
-    } else if (formData.email.length > 255) {
-      newErrors.email = "Email must be less than 255 characters";
-    }
+        // Show success message
+        Alert.alert(
+          "Welcome to GreenLeaf!",
+          "Your account has been created successfully. Start exploring sustainable travel options.",
+          [
+            {
+              text: "Get Started",
+              onPress: () => router.replace("/(tabs)/discover"),
+            },
+          ]
+        );
+      } catch (error: any) {
+        console.error("Registration error:", error);
 
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters long";
-    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password =
-        "Password must contain at least one lowercase letter, one uppercase letter, and one number";
-    }
-
-    // Confirm password validation
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-
-    // Phone validation (optional)
-    if (formData.phone) {
-      const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
-      const cleanPhone = formData.phone.replace(/[\s\-\(\)]/g, "");
-      if (
-        !phoneRegex.test(formData.phone) ||
-        cleanPhone.length < 7 ||
-        cleanPhone.length > 15
-      ) {
-        newErrors.phone = "Please provide a valid phone number";
+        // Handle validation errors from API
+        if (error.response?.data?.error?.code === "VALIDATION_ERROR") {
+          const apiErrors = error.response.data.error.details || {};
+          // Set formik errors
+          formik.setErrors(apiErrors);
+          Alert.alert(
+            "Please check your information",
+            "Some fields need to be corrected."
+          );
+        } else if (error.response?.data?.error?.code === "RESOURCE_CONFLICT") {
+          formik.setErrors({
+            email: "An account with this email already exists",
+          });
+          Alert.alert(
+            "Account Exists",
+            "An account with this email already exists. Please sign in instead."
+          );
+        } else {
+          const errorMessage =
+            error.response?.data?.error?.message ||
+            "Registration failed. Please try again.";
+          Alert.alert("Registration Failed", errorMessage);
+        }
       }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    },
+  });
 
   const getPasswordStrength = () => {
-    const password = formData.password;
+    const password = formik.values.password;
     if (!password) return { strength: 0, text: "", color: "#e5e7eb" };
 
     let strength = 0;
@@ -121,70 +150,6 @@ export default function SignUpScreen() {
     ];
 
     return strengthLevels[strength];
-  };
-
-  const handleSignUp = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      const userData: RegisterData = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-        phone: formData.phone.trim() || undefined,
-        dateOfBirth: formData.dateOfBirth || undefined,
-        preferredLanguage: "en",
-        currency: "USD",
-      };
-
-      await register(userData);
-
-      // Show success message
-      Alert.alert(
-        "Welcome to GreenLeaf!",
-        "Your account has been created successfully. Start exploring sustainable travel options.",
-        [
-          {
-            text: "Get Started",
-            onPress: () => router.replace("/(tabs)/discover"),
-          },
-        ]
-      );
-    } catch (error: any) {
-      console.error("Registration error:", error);
-
-      // Handle validation errors from API
-      if (error.response?.data?.error?.code === "VALIDATION_ERROR") {
-        const apiErrors = error.response.data.error.details || {};
-        setErrors(apiErrors);
-        Alert.alert(
-          "Please check your information",
-          "Some fields need to be corrected."
-        );
-      } else if (error.response?.data?.error?.code === "RESOURCE_CONFLICT") {
-        setErrors({ email: "An account with this email already exists" });
-        Alert.alert(
-          "Account Exists",
-          "An account with this email already exists. Please sign in instead."
-        );
-      } else {
-        const errorMessage =
-          error.response?.data?.error?.message ||
-          "Registration failed. Please try again.";
-        Alert.alert("Registration Failed", errorMessage);
-      }
-    }
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: "" });
-    }
   };
 
   const passwordStrength = getPasswordStrength();
@@ -226,7 +191,9 @@ export default function SignUpScreen() {
               <View className="flex-1">
                 <View
                   className={`flex-row items-center bg-gray-50 border rounded-2xl px-4 py-4 ${
-                    errors.firstName ? "border-red-300" : "border-gray-200"
+                    formik.errors.firstName && formik.touched.firstName
+                      ? "border-red-300"
+                      : "border-gray-200"
                   }`}
                 >
                   <Ionicons name="person-outline" size={20} color="#9CA3AF" />
@@ -234,16 +201,15 @@ export default function SignUpScreen() {
                     className="flex-1 ml-3 text-base text-gray-900"
                     placeholder="First name"
                     placeholderTextColor="#9CA3AF"
-                    value={formData.firstName}
-                    onChangeText={(value) =>
-                      handleInputChange("firstName", value)
-                    }
+                    value={formik.values.firstName}
+                    onChangeText={formik.handleChange("firstName")}
+                    onBlur={formik.handleBlur("firstName")}
                     autoCapitalize="words"
                   />
                 </View>
-                {errors.firstName && (
+                {formik.errors.firstName && formik.touched.firstName && (
                   <Text className="text-red-500 text-xs mt-1 ml-1">
-                    {errors.firstName}
+                    {formik.errors.firstName}
                   </Text>
                 )}
               </View>
@@ -251,23 +217,24 @@ export default function SignUpScreen() {
               <View className="flex-1">
                 <View
                   className={`flex-row items-center bg-gray-50 border rounded-2xl px-4 py-4 ${
-                    errors.lastName ? "border-red-300" : "border-gray-200"
+                    formik.errors.lastName && formik.touched.lastName
+                      ? "border-red-300"
+                      : "border-gray-200"
                   }`}
                 >
                   <TextInput
                     className="flex-1 text-base text-gray-900"
                     placeholder="Last name"
                     placeholderTextColor="#9CA3AF"
-                    value={formData.lastName}
-                    onChangeText={(value) =>
-                      handleInputChange("lastName", value)
-                    }
+                    value={formik.values.lastName}
+                    onChangeText={formik.handleChange("lastName")}
+                    onBlur={formik.handleBlur("lastName")}
                     autoCapitalize="words"
                   />
                 </View>
-                {errors.lastName && (
+                {formik.errors.lastName && formik.touched.lastName && (
                   <Text className="text-red-500 text-xs mt-1 ml-1">
-                    {errors.lastName}
+                    {formik.errors.lastName}
                   </Text>
                 )}
               </View>
@@ -277,7 +244,9 @@ export default function SignUpScreen() {
             <View className="mb-5">
               <View
                 className={`flex-row items-center bg-gray-50 border rounded-2xl px-4 py-4 ${
-                  errors.email ? "border-red-300" : "border-gray-200"
+                  formik.errors.email && formik.touched.email
+                    ? "border-red-300"
+                    : "border-gray-200"
                 }`}
               >
                 <Ionicons name="mail-outline" size={20} color="#9CA3AF" />
@@ -285,15 +254,16 @@ export default function SignUpScreen() {
                   className="flex-1 ml-3 text-base text-gray-900"
                   placeholder="Email address"
                   placeholderTextColor="#9CA3AF"
-                  value={formData.email}
-                  onChangeText={(value) => handleInputChange("email", value)}
+                  value={formik.values.email}
+                  onChangeText={formik.handleChange("email")}
+                  onBlur={formik.handleBlur("email")}
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
               </View>
-              {errors.email && (
+              {formik.errors.email && formik.touched.email && (
                 <Text className="text-red-500 text-xs mt-1 ml-1">
-                  {errors.email}
+                  {formik.errors.email}
                 </Text>
               )}
             </View>
@@ -302,7 +272,9 @@ export default function SignUpScreen() {
             <View className="mb-5">
               <View
                 className={`flex-row items-center bg-gray-50 border rounded-2xl px-4 py-4 ${
-                  errors.phone ? "border-red-300" : "border-gray-200"
+                  formik.errors.phone && formik.touched.phone
+                    ? "border-red-300"
+                    : "border-gray-200"
                 }`}
               >
                 <Ionicons name="call-outline" size={20} color="#9CA3AF" />
@@ -310,14 +282,15 @@ export default function SignUpScreen() {
                   className="flex-1 ml-3 text-base text-gray-900"
                   placeholder="Phone number (optional)"
                   placeholderTextColor="#9CA3AF"
-                  value={formData.phone}
-                  onChangeText={(value) => handleInputChange("phone", value)}
+                  value={formik.values.phone}
+                  onChangeText={formik.handleChange("phone")}
+                  onBlur={formik.handleBlur("phone")}
                   keyboardType="phone-pad"
                 />
               </View>
-              {errors.phone && (
+              {formik.errors.phone && formik.touched.phone && (
                 <Text className="text-red-500 text-xs mt-1 ml-1">
-                  {errors.phone}
+                  {formik.errors.phone}
                 </Text>
               )}
             </View>
@@ -326,7 +299,9 @@ export default function SignUpScreen() {
             <View className="mb-3">
               <View
                 className={`flex-row items-center bg-gray-50 border rounded-2xl px-4 py-4 ${
-                  errors.password ? "border-red-300" : "border-gray-200"
+                  formik.errors.password && formik.touched.password
+                    ? "border-red-300"
+                    : "border-gray-200"
                 }`}
               >
                 <Ionicons
@@ -338,8 +313,9 @@ export default function SignUpScreen() {
                   className="flex-1 ml-3 text-base text-gray-900"
                   placeholder="Password"
                   placeholderTextColor="#9CA3AF"
-                  value={formData.password}
-                  onChangeText={(value) => handleInputChange("password", value)}
+                  value={formik.values.password}
+                  onChangeText={formik.handleChange("password")}
+                  onBlur={formik.handleBlur("password")}
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity
@@ -352,15 +328,15 @@ export default function SignUpScreen() {
                   />
                 </TouchableOpacity>
               </View>
-              {errors.password && (
+              {formik.errors.password && formik.touched.password && (
                 <Text className="text-red-500 text-xs mt-1 ml-1">
-                  {errors.password}
+                  {formik.errors.password}
                 </Text>
               )}
             </View>
 
             {/* Password Strength Indicator */}
-            {formData.password && (
+            {formik.values.password && (
               <View className="mb-5">
                 <View className="flex-row items-center justify-between mb-1">
                   <Text className="text-xs text-gray-500">
@@ -389,7 +365,10 @@ export default function SignUpScreen() {
             <View className="mb-8">
               <View
                 className={`flex-row items-center bg-gray-50 border rounded-2xl px-4 py-4 ${
-                  errors.confirmPassword ? "border-red-300" : "border-gray-200"
+                  formik.errors.confirmPassword &&
+                  formik.touched.confirmPassword
+                    ? "border-red-300"
+                    : "border-gray-200"
                 }`}
               >
                 <Ionicons
@@ -401,10 +380,9 @@ export default function SignUpScreen() {
                   className="flex-1 ml-3 text-base text-gray-900"
                   placeholder="Confirm password"
                   placeholderTextColor="#9CA3AF"
-                  value={formData.confirmPassword}
-                  onChangeText={(value) =>
-                    handleInputChange("confirmPassword", value)
-                  }
+                  value={formik.values.confirmPassword}
+                  onChangeText={formik.handleChange("confirmPassword")}
+                  onBlur={formik.handleBlur("confirmPassword")}
                   secureTextEntry={!showConfirmPassword}
                 />
                 <TouchableOpacity
@@ -419,11 +397,12 @@ export default function SignUpScreen() {
                   />
                 </TouchableOpacity>
               </View>
-              {errors.confirmPassword && (
-                <Text className="text-red-500 text-xs mt-1 ml-1">
-                  {errors.confirmPassword}
-                </Text>
-              )}
+              {formik.errors.confirmPassword &&
+                formik.touched.confirmPassword && (
+                  <Text className="text-red-500 text-xs mt-1 ml-1">
+                    {formik.errors.confirmPassword}
+                  </Text>
+                )}
             </View>
 
             {/* Sign Up Button */}
@@ -431,7 +410,7 @@ export default function SignUpScreen() {
               className={`bg-primary rounded-2xl py-4 items-center mb-6 shadow-sm ${
                 isLoading ? "opacity-70" : ""
               }`}
-              onPress={handleSignUp}
+              onPress={() => formik.handleSubmit()}
               disabled={isLoading}
             >
               <Text className="text-white font-bold text-lg">
