@@ -236,8 +236,16 @@ const getAccommodationsValidation = [
 
   query("limit")
     .optional()
-    .isInt({ min: 1, max: 50 })
-    .withMessage("Limit must be between 1-50")
+    .custom((value) => {
+      if (value === undefined || value === null || value === "") {
+        return true; // Allow empty/missing values
+      }
+      const num = parseInt(value, 10);
+      if (isNaN(num) || num < 1 || num > 50) {
+        throw new Error("Limit must be between 1-50");
+      }
+      return true;
+    })
     .toInt(),
 
   handleValidationErrors,
