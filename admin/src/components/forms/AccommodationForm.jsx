@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { uploadAPI } from "../../services/api";
 import EcoScoreDisplay from "../common/EcoScoreDisplay";
+import FormError from "../ui/FormError";
 
 // Google Places Autocomplete Component
 const GooglePlacesAutocomplete = ({ onPlaceSelected }) => {
@@ -104,7 +105,7 @@ const AccommodationForm = ({
   isLoading,
   onRecalculateEcoScores,
 }) => {
-  const [formData, setFormData] = useState({
+  const defaultValues = {
     name: "",
     description: "",
     address: "",
@@ -123,34 +124,23 @@ const AccommodationForm = ({
     priceRange: "$",
     checkInTime: "15:00",
     checkOutTime: "11:00",
-    googlePlaceId: "", // New field for Google Place ID
+    googlePlaceId: "",
     amenities: [],
     certifications: [],
     imageUrls: [],
     isVerified: false,
     isActive: true,
-  });
+  };
+
+  const [formData, setFormData] = useState(defaultValues);
 
   const [imageUploading, setImageUploading] = useState(false);
   const [coordinatesAutoFilled, setCoordinatesAutoFilled] = useState(false);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (initialData) {
-      setFormData({
-        ...initialData,
-        amenities: initialData.amenities || [],
-        certifications: initialData.certifications || [],
-        imageUrls: initialData.imageUrls || [],
-      });
-
-      // Check if coordinates were auto-filled from Google Places
-      if (
-        initialData.latitude &&
-        initialData.longitude &&
-        initialData.ecoScoreMetadata?.googlePlaceId
-      ) {
-        setCoordinatesAutoFilled(true);
-      }
+      setFormData(initialData);
     }
   }, [initialData]);
 
@@ -174,6 +164,11 @@ const AccommodationForm = ({
 
       return updatedData;
     });
+
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleArrayChange = (name, value) => {
@@ -222,6 +217,18 @@ const AccommodationForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Simple validation
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.city.trim()) newErrors.city = "City is required";
+    if (!formData.country.trim()) newErrors.country = "Country is required";
+    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = "Invalid email format";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
     // Prepare data for submission - remove eco scores as they're auto-calculated
     const submitData = {
@@ -308,8 +315,11 @@ const AccommodationForm = ({
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+              errors.name ? "border-red-500" : "border-gray-300"
+            }`}
           />
+          <FormError error={errors.name} />
         </div>
 
         <div>

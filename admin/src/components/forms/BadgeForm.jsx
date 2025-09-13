@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import FormError from "../ui/FormError";
 
 const BadgeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,8 @@ const BadgeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     rarity: "common",
     isActive: true,
   });
+
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (initialData) {
@@ -27,10 +30,27 @@ const BadgeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Simple validation
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.description.trim())
+      newErrors.description = "Description is required";
+    if (!formData.emoji.trim()) newErrors.emoji = "Emoji is required";
+    if (formData.requirementsThreshold < 1)
+      newErrors.requirementsThreshold = "Threshold must be at least 1";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
     // Prepare data for submission
     const submitData = {
@@ -110,9 +130,12 @@ const BadgeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+              errors.name ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="e.g., First Event Participant"
           />
+          <FormError error={errors.name} />
         </div>
 
         <div>
@@ -124,10 +147,13 @@ const BadgeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             name="emoji"
             value={formData.emoji}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+              errors.emoji ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="🌱"
             maxLength={4}
           />
+          <FormError error={errors.emoji} />
         </div>
       </div>
 
@@ -141,9 +167,12 @@ const BadgeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           onChange={handleChange}
           required
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+            errors.description ? "border-red-500" : "border-gray-300"
+          }`}
           placeholder="Describe what this badge represents and how to earn it"
         />
+        <FormError error={errors.description} />
       </div>
 
       {/* Categorization */}
