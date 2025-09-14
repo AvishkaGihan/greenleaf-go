@@ -425,28 +425,6 @@ export default function SignUpScreen() {
               <Text className="text-primary">Privacy Policy</Text>
             </Text>
 
-            {/* Divider */}
-            <View className="flex-row items-center mb-6">
-              <View className="flex-1 h-px bg-gray-200" />
-              <Text className="mx-4 text-gray-400 text-sm">or</Text>
-              <View className="flex-1 h-px bg-gray-200" />
-            </View>
-
-            {/* Social Login Buttons */}
-            <TouchableOpacity className="flex-row items-center justify-center bg-white border border-gray-200 rounded-2xl py-4 mb-3 shadow-sm">
-              <Ionicons name="logo-google" size={20} color="#4285F4" />
-              <Text className="ml-3 text-gray-700 font-medium">
-                Continue with Google
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity className="flex-row items-center justify-center bg-black rounded-2xl py-4 mb-8 shadow-sm">
-              <Ionicons name="logo-apple" size={20} color="white" />
-              <Text className="ml-3 text-white font-medium">
-                Continue with Apple
-              </Text>
-            </TouchableOpacity>
-
             {/* Sign In Link */}
             <TouchableOpacity
               className="items-center pb-6"
