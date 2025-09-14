@@ -47,7 +47,7 @@ const ECO_INTERESTS = [
   { label: "Renewable Energy", value: "renewable-energy" },
 ];
 
-const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"];
+const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "LKR"];
 const LANGUAGES = ["en", "es", "fr", "de", "it", "pt", "zh", "ja"];
 
 const validationSchema = Yup.object().shape({
