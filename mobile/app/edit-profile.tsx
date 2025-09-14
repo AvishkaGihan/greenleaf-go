@@ -62,7 +62,7 @@ const validationSchema = Yup.object().shape({
     .min(2, "Last name must be at least 2 characters")
     .max(50, "Last name must be less than 50 characters"),
   phone: Yup.string()
-    .matches(/^\+?[1-9]\d{1,14}$/, "Please enter a valid phone number")
+    .matches(/^\+?[\d\s\-\(\)]{7,20}$/, "Please enter a valid phone number")
     .optional(),
 });
 
