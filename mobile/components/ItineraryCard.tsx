@@ -30,12 +30,14 @@ interface ItineraryCardProps {
   loading?: boolean;
   onSave?: () => void;
   onRegenerate?: () => void;
+  budgetCurrency?: string;
 }
 
 const renderAISuggestion = (
   suggestion: AISuggestion,
   onSave?: () => void,
-  onRegenerate?: () => void
+  onRegenerate?: () => void,
+  currency: string = "USD"
 ) => {
   const getEcoScoreColor = (score: number) => {
     if (score >= 4.5) return "text-green-600";
@@ -136,7 +138,7 @@ const renderAISuggestion = (
 
         <View className="items-center flex-1">
           <Text className="text-2xl font-bold text-primary">
-            💰 ${suggestion.totalCost || "N/A"}
+            💰 {currency} {suggestion.totalCost || "N/A"}
           </Text>
           <Text className="text-gray-600 text-xs text-center mt-1">
             Total Cost
@@ -232,7 +234,7 @@ const renderAISuggestion = (
                         </Text>
                         {activity.estimatedCost > 0 && (
                           <Text className="text-primary font-bold text-lg">
-                            ${activity.estimatedCost}
+                            {currency} {activity.estimatedCost}
                           </Text>
                         )}
                       </View>
@@ -319,6 +321,7 @@ export default function ItineraryCard({
   loading = false,
   onSave,
   onRegenerate,
+  budgetCurrency = "USD",
 }: ItineraryCardProps) {
   // Early return for loading state
   if (loading) {
@@ -354,7 +357,7 @@ export default function ItineraryCard({
 
   // Handle AI suggestion format
   if (suggestion) {
-    return renderAISuggestion(suggestion, onSave, onRegenerate);
+    return renderAISuggestion(suggestion, onSave, onRegenerate, budgetCurrency);
   }
 
   // Handle full itinerary format (existing logic)
@@ -478,7 +481,7 @@ export default function ItineraryCard({
           {itinerary.budgetTotal && (
             <View className="items-center flex-1">
               <Text className="text-2xl font-bold text-primary">
-                💰 ${itinerary.budgetTotal}
+                💰 {itinerary.budgetCurrency || "USD"} {itinerary.budgetTotal}
               </Text>
               <Text className="text-gray-600 text-xs text-center mt-1">
                 Budget
@@ -586,7 +589,10 @@ export default function ItineraryCard({
                             </Text>
                             {item.estimatedCost && (
                               <Text className="text-primary font-bold text-lg">
-                                ${item.estimatedCost}
+                                {item.currency ||
+                                  itinerary.budgetCurrency ||
+                                  "USD"}{" "}
+                                {item.estimatedCost}
                               </Text>
                             )}
                           </View>

@@ -962,6 +962,7 @@ export default function PlanScreen() {
                 loading={loading}
                 onSave={handleSaveItinerary}
                 onRegenerate={handleRegenerateItinerary}
+                budgetCurrency={budgetCurrency}
               />
             </View>
           )}
