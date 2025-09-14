@@ -95,6 +95,9 @@ export default function EditProfileScreen() {
       profileImageUrl: "",
     },
     validationSchema,
+    validateOnMount: false, // Don't validate on mount
+    validateOnChange: !loading, // Only validate after loading is complete
+    validateOnBlur: !loading, // Only validate after loading is complete
     onSubmit: handleSave,
   });
 
@@ -102,11 +105,34 @@ export default function EditProfileScreen() {
     fetchProfile();
   }, []);
 
+  // Debug form validation state
+  useEffect(() => {
+    console.log("Form validation state:", {
+      isValid: formik.isValid,
+      errors: formik.errors,
+      touched: formik.touched,
+      loading,
+      saving,
+    });
+  }, [formik.isValid, formik.errors, formik.touched, loading, saving]);
+
+  // Re-enable validation after loading is complete
+  useEffect(() => {
+    if (!loading) {
+      console.log("Loading complete, enabling validation");
+      // Force a validation check
+      formik.validateForm();
+    }
+  }, [loading]);
+
   const fetchProfile = async () => {
     try {
       setLoading(true);
+      console.log("Fetching profile data...");
       const response = await userAPI.getProfile();
       const userData = response.data;
+
+      console.log("Profile data received:", userData);
 
       formik.setValues({
         firstName: userData.firstName || "",
@@ -121,9 +147,18 @@ export default function EditProfileScreen() {
         currency: userData.currency || "USD",
         profileImageUrl: userData.profileImageUrl || "",
       });
+
+      // Force validation after setting values
+      setTimeout(() => {
+        formik.validateForm();
+        console.log("Form validation triggered after data load");
+      }, 100);
     } catch (error) {
       console.error("Error fetching profile:", error);
-      Alert.alert("Error", "Failed to load profile data");
+      Alert.alert(
+        "Error",
+        "Failed to load profile data. Please check your connection and try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -234,9 +269,9 @@ export default function EditProfileScreen() {
         <Text className="text-xl font-bold text-gray-900">Edit Profile</Text>
         <TouchableOpacity
           onPress={() => formik.handleSubmit()}
-          disabled={saving || !formik.isValid}
+          disabled={saving || loading || !formik.isValid}
           className={`px-4 py-2 rounded-full ${
-            saving || !formik.isValid ? "bg-gray-300" : "bg-primary"
+            saving || loading || !formik.isValid ? "bg-gray-300" : "bg-primary"
           }`}
         >
           {saving ? (
@@ -290,9 +325,13 @@ export default function EditProfileScreen() {
               value={formik.values.firstName}
               onChangeText={(text) => {
                 formik.setFieldValue("firstName", text);
-                formik.setFieldTouched("firstName", true);
+                if (!loading) {
+                  formik.setFieldTouched("firstName", true);
+                }
               }}
-              onBlur={() => formik.setFieldTouched("firstName", true)}
+              onBlur={() =>
+                !loading && formik.setFieldTouched("firstName", true)
+              }
               placeholder="Enter first name"
             />
             {formik.touched.firstName && formik.errors.firstName && (
@@ -313,9 +352,13 @@ export default function EditProfileScreen() {
               value={formik.values.lastName}
               onChangeText={(text) => {
                 formik.setFieldValue("lastName", text);
-                formik.setFieldTouched("lastName", true);
+                if (!loading) {
+                  formik.setFieldTouched("lastName", true);
+                }
               }}
-              onBlur={() => formik.setFieldTouched("lastName", true)}
+              onBlur={() =>
+                !loading && formik.setFieldTouched("lastName", true)
+              }
               placeholder="Enter last name"
             />
             {formik.touched.lastName && formik.errors.lastName && (
@@ -349,9 +392,11 @@ export default function EditProfileScreen() {
               value={formik.values.phone}
               onChangeText={(text) => {
                 formik.setFieldValue("phone", text);
-                formik.setFieldTouched("phone", true);
+                if (!loading) {
+                  formik.setFieldTouched("phone", true);
+                }
               }}
-              onBlur={() => formik.setFieldTouched("phone", true)}
+              onBlur={() => !loading && formik.setFieldTouched("phone", true)}
               placeholder="Enter phone number"
               keyboardType="phone-pad"
             />
