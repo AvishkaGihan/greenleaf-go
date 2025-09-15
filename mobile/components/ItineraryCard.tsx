@@ -204,7 +204,16 @@ const renderAISuggestion = (
         <Text className="text-lg font-semibold text-gray-800 mb-4">
           📅 Detailed Itinerary
         </Text>
-        <ScrollView className="max-h-80">
+        <ScrollView
+          className="max-h-80"
+          nestedScrollEnabled={true}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+          contentContainerStyle={{ paddingBottom: 10 }}
+          scrollEventThrottle={16}
+          decelerationRate="normal"
+        >
           {suggestion.days.map((day, dayIndex) => (
             <View
               key={dayIndex}
@@ -555,7 +564,16 @@ export default function ItineraryCard({
         <Text className="text-lg font-semibold text-gray-800 mb-4">
           📅 Daily Itinerary
         </Text>
-        <ScrollView className="max-h-80">
+        <ScrollView
+          className="max-h-80"
+          nestedScrollEnabled={true}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+          contentContainerStyle={{ paddingBottom: 10 }}
+          scrollEventThrottle={16}
+          decelerationRate="normal"
+        >
           {Object.keys(itemsByDay)
             .sort((a, b) => parseInt(a) - parseInt(b))
             .map((dayNumber) => (

@@ -403,6 +403,9 @@ export default function PlanScreen() {
           className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 20 }}
+          nestedScrollEnabled={false}
+          bounces={Platform.OS === "ios"}
+          overScrollMode={Platform.OS === "android" ? "never" : undefined}
         >
           {/* Header Section */}
           <View className="items-center pt-16 pb-8 px-6">
