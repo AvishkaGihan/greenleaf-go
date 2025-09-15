@@ -49,7 +49,7 @@ const conservationEventSchema = new mongoose.Schema(
       type: {
         type: String,
         enum: ["Point"],
-        default: "Point",
+        // Removed default to prevent automatic creation
       },
       coordinates: {
         type: [Number],
@@ -88,6 +88,22 @@ const conservationEventSchema = new mongoose.Schema(
     isApproved: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    // Event submission and approval workflow
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    submittedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    submissionDate: { type: Date, default: Date.now },
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    approvalDate: Date,
+    rejectionReason: String,
   },
   {
     timestamps: true,
@@ -100,5 +116,25 @@ conservationEventSchema.index({ startDate: 1, endDate: 1 });
 conservationEventSchema.index({ city: 1, country: 1 });
 conservationEventSchema.index({ eventType: 1 });
 conservationEventSchema.index({ isActive: 1, isApproved: 1 });
+conservationEventSchema.index({ status: 1 });
+conservationEventSchema.index({ submittedBy: 1 });
+conservationEventSchema.index({ submissionDate: 1 });
+
+// Middleware to sync isApproved with status
+conservationEventSchema.pre("save", function (next) {
+  // Sync isApproved field with status for backward compatibility
+  this.isApproved = this.status === "approved";
+
+  // Set approvalDate if status is being changed to approved
+  if (
+    this.isModified("status") &&
+    this.status === "approved" &&
+    !this.approvalDate
+  ) {
+    this.approvalDate = new Date();
+  }
+
+  next();
+});
 
 export default mongoose.model("ConservationEvent", conservationEventSchema);

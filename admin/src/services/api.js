@@ -14,6 +14,12 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("adminToken");
+    console.log(
+      "🔐 Admin API: Adding token to request:",
+      !!token,
+      "for URL:",
+      config.url
+    );
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,9 +33,25 @@ api.interceptors.request.use(
 // Response interceptor for error handling and token refresh
 api.interceptors.response.use(
   (response) => {
+    console.log(
+      "📋 Admin API: Response success for",
+      response.config.url,
+      "- Status:",
+      response.status
+    );
     return response;
   },
   async (error) => {
+    console.log(
+      "❌ Admin API: Response error for",
+      error.config?.url,
+      "- Status:",
+      error.response?.status,
+      "- Message:",
+      error.message
+    );
+    console.log("❌ Admin API: Error details:", error.response?.data);
+
     const originalRequest = error.config;
 
     // Handle 401 errors (unauthorized)
@@ -131,6 +153,13 @@ export const eventAPI = {
   updateEvent: (id, data) => api.put(`/api/v1/events/${id}`, data),
   deleteEvent: (id) => api.delete(`/api/v1/events/${id}`),
   approveEvent: (id) => api.put(`/api/v1/events/${id}/approve`),
+  rejectEvent: (id, reason) =>
+    api.put(`/api/v1/events/${id}/reject`, { reason }),
+  getPendingEvents: (params) =>
+    api.get("/api/v1/events/admin/pending", { params }),
+  getAllEvents: (params) => api.get("/api/v1/events/admin/all", { params }),
+  getVolunteerEvents: (params) =>
+    api.get("/api/v1/events/volunteer", { params }),
 };
 
 // Badge API calls

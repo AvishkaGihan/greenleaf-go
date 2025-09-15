@@ -2,6 +2,7 @@
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import EventForm from "../forms/EventForm";
+import RejectEventModal from "../modals/RejectEventModal";
 import { eventAPI } from "../../services/api";
 
 const Events = () => {
@@ -14,15 +15,45 @@ const Events = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("all"); // "all", "pending", "volunteer"
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [eventToReject, setEventToReject] = useState(null);
 
-  // Fetch events
-  const fetchEvents = async () => {
+  // Refresh events data
+  const refreshEvents = async () => {
     try {
       setIsLoading(true);
-      const response = await eventAPI.getEvents();
+      let response;
+
+      console.log("🔍 Admin Events: Refreshing events, viewMode:", viewMode);
+
+      if (viewMode === "pending") {
+        console.log("🔍 Admin Events: Calling getPendingEvents");
+        response = await eventAPI.getPendingEvents();
+      } else if (viewMode === "volunteer") {
+        console.log("🔍 Admin Events: Calling getVolunteerEvents");
+        response = await eventAPI.getVolunteerEvents();
+      } else {
+        console.log("🔍 Admin Events: Calling getAllEvents");
+        response = await eventAPI.getAllEvents();
+      }
+
+      console.log("📋 Admin Events: API Response:", response);
+      console.log("📋 Admin Events: Response data:", response.data);
+      console.log(
+        "📋 Admin Events: Events array:",
+        response.data?.data?.events
+      );
+
       setEvents(response.data.data.events || response.data.data);
+      console.log(
+        "✅ Admin Events: Set events to state:",
+        response.data.data.events?.length || 0,
+        "events"
+      );
     } catch (error) {
-      console.error("Failed to fetch events:", error);
+      console.error("❌ Admin Events: Failed to fetch events:", error);
+      console.error("❌ Admin Events: Error details:", error.response?.data);
       alert("Failed to load events. Please try again.");
     } finally {
       setIsLoading(false);
@@ -30,8 +61,51 @@ const Events = () => {
   };
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    const loadEvents = async () => {
+      try {
+        setIsLoading(true);
+        let response;
+
+        console.log(
+          "🔍 Admin Events: useEffect loadEvents, viewMode:",
+          viewMode
+        );
+
+        if (viewMode === "pending") {
+          console.log("🔍 Admin Events: useEffect calling getPendingEvents");
+          response = await eventAPI.getPendingEvents();
+        } else if (viewMode === "volunteer") {
+          console.log("🔍 Admin Events: useEffect calling getVolunteerEvents");
+          response = await eventAPI.getVolunteerEvents();
+        } else {
+          console.log("🔍 Admin Events: useEffect calling getAllEvents");
+          response = await eventAPI.getAllEvents();
+        }
+
+        console.log("📋 Admin Events: useEffect response:", response);
+        setEvents(response.data.data.events || response.data.data);
+        console.log(
+          "✅ Admin Events: useEffect set events:",
+          response.data.data.events?.length || 0,
+          "events"
+        );
+      } catch (error) {
+        console.error(
+          "❌ Admin Events: useEffect failed to fetch events:",
+          error
+        );
+        console.error(
+          "❌ Admin Events: useEffect error details:",
+          error.response?.data
+        );
+        alert("Failed to load events. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, [viewMode]);
 
   // Filter events based on search and filters
   useEffect(() => {
@@ -41,10 +115,11 @@ const Events = () => {
     if (searchTerm) {
       filtered = filtered.filter(
         (event) =>
-          event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.organizer.toLowerCase().includes(searchTerm.toLowerCase())
+          event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.eventType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.organizerName?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -52,12 +127,14 @@ const Events = () => {
     if (statusFilter !== "all") {
       filtered = filtered.filter((event) => {
         const now = new Date();
-        const eventDate = new Date(event.dateTime);
+        const eventDate = new Date(event.startDate || event.dateTime);
 
-        if (statusFilter === "upcoming") return eventDate > now;
+        if (statusFilter === "upcoming")
+          return eventDate > now && event.status === "approved";
         if (statusFilter === "past") return eventDate < now;
         if (statusFilter === "pending") return event.status === "pending";
         if (statusFilter === "approved") return event.status === "approved";
+        if (statusFilter === "rejected") return event.status === "rejected";
         return true;
       });
     }
@@ -65,7 +142,9 @@ const Events = () => {
     // Type filter
     if (typeFilter !== "all") {
       filtered = filtered.filter((event) =>
-        event.type.toLowerCase().includes(typeFilter.toLowerCase())
+        (event.eventType || event.type)
+          ?.toLowerCase()
+          .includes(typeFilter.toLowerCase())
       );
     }
 
@@ -90,11 +169,32 @@ const Events = () => {
     try {
       setIsSubmitting(true);
       await eventAPI.approveEvent(event._id);
-      await fetchEvents();
+      await refreshEvents();
       alert("Event approved successfully!");
     } catch (error) {
       console.error("Failed to approve event:", error);
       alert("Failed to approve event. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReject = (event) => {
+    setEventToReject(event);
+    setIsRejectModalOpen(true);
+  };
+
+  const handleRejectConfirm = async (reason) => {
+    try {
+      setIsSubmitting(true);
+      await eventAPI.rejectEvent(eventToReject._id, reason);
+      await refreshEvents();
+      setIsRejectModalOpen(false);
+      setEventToReject(null);
+      alert("Event rejected successfully!");
+    } catch (error) {
+      console.error("Failed to reject event:", error);
+      alert("Failed to reject event. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +208,7 @@ const Events = () => {
     try {
       setIsSubmitting(true);
       await eventAPI.deleteEvent(event._id);
-      await fetchEvents();
+      await refreshEvents();
       alert("Event deleted successfully!");
     } catch (error) {
       console.error("Failed to delete event:", error);
@@ -132,7 +232,7 @@ const Events = () => {
 
       setIsModalOpen(false);
       setEditingItem(null);
-      await fetchEvents();
+      await refreshEvents();
     } catch (error) {
       console.error("Failed to save event:", error);
       alert("Failed to save event. Please try again.");
@@ -158,12 +258,20 @@ const Events = () => {
 
   const getStatusBadge = (event) => {
     const now = new Date();
-    const eventDate = new Date(event.dateTime);
+    const eventDate = new Date(event.dateTime || event.startDate);
 
     if (event.status === "pending") {
       return (
         <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
           Pending Approval
+        </span>
+      );
+    }
+
+    if (event.status === "rejected") {
+      return (
+        <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          Rejected
         </span>
       );
     }
@@ -191,38 +299,47 @@ const Events = () => {
       render: (event) => event.title,
     },
     {
-      key: "dateTime",
+      key: "startDate",
       header: "Date & Time",
-      render: (event) => formatDate(event.dateTime),
+      render: (event) => formatDate(event.startDate || event.dateTime),
     },
     {
       key: "location",
       header: "Location",
       render: (event) => {
-        if (!event.location) return "N/A";
-        if (typeof event.location === "string") return event.location;
-        if (typeof event.location === "object" && event.location.coordinates) {
-          // Handle GeoJSON Point format
+        if (event.city && event.country) {
+          return `${event.city}, ${event.country}`;
+        }
+        if (event.address) {
+          return event.address;
+        }
+        if (event.location?.coordinates) {
           const [lng, lat] = event.location.coordinates;
           return `${lat}, ${lng}`;
         }
-        return "Invalid location";
+        return "N/A";
       },
     },
     {
-      key: "type",
+      key: "eventType",
       header: "Type",
-      render: (event) => event.type,
+      render: (event) => event.eventType || event.type || "N/A",
     },
     {
       key: "capacity",
       header: "Capacity",
-      render: (event) => `${event.capacity || 0}/${event.maxCapacity || "∞"}`,
+      render: (event) =>
+        `${event.currentParticipants || 0}/${event.maxParticipants || "∞"}`,
     },
     {
-      key: "organizer",
-      header: "Organizer",
-      render: (event) => event.organizer,
+      key: "submittedBy",
+      header: "Submitted By",
+      render: (event) => {
+        if (event.submittedBy?.firstName && event.submittedBy?.lastName) {
+          return `${event.submittedBy.firstName} ${event.submittedBy.lastName}`;
+        }
+        return event.organizerName || "N/A";
+      },
     },
     {
       key: "status",
@@ -242,13 +359,22 @@ const Events = () => {
             Edit
           </button>
           {event.status === "pending" && (
-            <button
-              onClick={() => handleApprove(event)}
-              className="text-green-600 hover:text-green-800"
-              disabled={isSubmitting}
-            >
-              Approve
-            </button>
+            <>
+              <button
+                onClick={() => handleApprove(event)}
+                className="text-green-600 hover:text-green-800"
+                disabled={isSubmitting}
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => handleReject(event)}
+                className="text-red-600 hover:text-red-800"
+                disabled={isSubmitting}
+              >
+                Reject
+              </button>
+            </>
           )}
           <button
             onClick={() => handleDelete(event)}
@@ -263,7 +389,9 @@ const Events = () => {
   ];
 
   // Get unique event types for filter dropdown
-  const eventTypes = [...new Set(events.map((e) => e.type))];
+  const eventTypes = [
+    ...new Set(events.map((e) => e.eventType || e.type).filter(Boolean)),
+  ];
 
   return (
     <div className="p-6">
@@ -280,7 +408,22 @@ const Events = () => {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              View Mode
+            </label>
+            <select
+              value={viewMode}
+              onChange={(e) => setViewMode(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Events</option>
+              <option value="pending">Pending Approval</option>
+              <option value="volunteer">Volunteer Events</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Search
@@ -308,6 +451,7 @@ const Events = () => {
               <option value="past">Past</option>
               <option value="pending">Pending Approval</option>
               <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
             </select>
           </div>
 
@@ -365,6 +509,18 @@ const Events = () => {
           isSubmitting={isSubmitting}
         />
       </Modal>
+
+      {/* Reject Event Modal */}
+      <RejectEventModal
+        isOpen={isRejectModalOpen}
+        onClose={() => {
+          setIsRejectModalOpen(false);
+          setEventToReject(null);
+        }}
+        onReject={handleRejectConfirm}
+        eventTitle={eventToReject?.title || ""}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 };

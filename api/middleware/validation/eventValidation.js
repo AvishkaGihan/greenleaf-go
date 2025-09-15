@@ -214,4 +214,20 @@ const eventRsvpValidation = [
   handleValidationErrors,
 ];
 
-export { eventValidation, getEventsValidation, eventRsvpValidation };
+const eventRejectionValidation = [
+  body("reason")
+    .trim()
+    .isLength({ min: 1, max: 1000 })
+    .withMessage(
+      "Rejection reason is required and must be less than 1000 characters"
+    ),
+
+  handleValidationErrors,
+];
+
+export {
+  eventValidation,
+  getEventsValidation,
+  eventRsvpValidation,
+  eventRejectionValidation,
+};

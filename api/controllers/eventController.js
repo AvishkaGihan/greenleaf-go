@@ -5,9 +5,15 @@ import User from "../models/User.js";
 import { AppError } from "../utils/errorHandler.js";
 import { calculateDistance } from "../services/geoService.js";
 import { checkAndAwardBadges } from "../services/badgeService.js";
+import {
+  notifyEventApproved,
+  notifyEventRejected,
+  notifyAdminsNewEventSubmission,
+} from "../services/notificationService.js";
 
 export const getEvents = async (req, res, next) => {
   try {
+    console.log("🔍 getEvents called (public endpoint)");
     const {
       city,
       country,
@@ -23,7 +29,8 @@ export const getEvents = async (req, res, next) => {
       limit = 20,
     } = req.query;
 
-    const query = { isActive: true, isApproved: true };
+    const query = { isActive: true, status: "approved" };
+    console.log("🔍 Public getEvents query:", JSON.stringify(query, null, 2));
 
     // Build query
     if (city) query.city = new RegExp(city, "i");
@@ -46,6 +53,8 @@ export const getEvents = async (req, res, next) => {
       .skip(skip)
       .limit(parseInt(limit))
       .lean();
+
+    console.log("📊 Events found:", events.length);
 
     // Calculate distances if coordinates provided
     if (latitude && longitude) {
@@ -425,13 +434,20 @@ export const approveEvent = async (req, res, next) => {
 
     const event = await ConservationEvent.findByIdAndUpdate(
       eventId,
-      { isApproved: true },
+      {
+        status: "approved",
+        approvedBy: req.user._id,
+        approvalDate: new Date(),
+      },
       { new: true }
-    );
+    ).populate("submittedBy", "firstName lastName email");
 
     if (!event) {
       throw new AppError("Event not found", 404, "NOT_FOUND");
     }
+
+    // Send notification to submitter about approval
+    await notifyEventApproved(event);
 
     res.json({
       success: true,
@@ -440,5 +456,402 @@ export const approveEvent = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// New endpoints for event submission workflow
+
+export const submitEvent = async (req, res, next) => {
+  try {
+    const eventData = {
+      ...req.body,
+      submittedBy: req.user._id,
+      createdBy: req.user._id,
+      status: "pending",
+      isApproved: false,
+      isActive: true,
+    };
+
+    // Debug: Log the location data being received
+    console.log(
+      "Received location data:",
+      JSON.stringify(eventData.location, null, 2)
+    );
+
+    // Remove location field entirely if no proper coordinates are provided
+    // This prevents MongoDB geo indexing errors when coordinates are missing
+    if (
+      eventData.location &&
+      (!eventData.location.coordinates ||
+        !Array.isArray(eventData.location.coordinates) ||
+        eventData.location.coordinates.length !== 2 ||
+        eventData.location.coordinates.some(
+          (coord) => typeof coord !== "number"
+        ))
+    ) {
+      console.log("Removing invalid location data");
+      delete eventData.location;
+    }
+
+    // Also delete location if it only has type but no coordinates
+    if (eventData.location && !eventData.location.coordinates) {
+      console.log("Removing location with no coordinates");
+      delete eventData.location;
+    }
+
+    console.log(
+      "Final location data:",
+      JSON.stringify(eventData.location, null, 2)
+    );
+
+    const event = new ConservationEvent(eventData);
+    await event.save();
+
+    await event.populate("submittedBy", "firstName lastName email");
+
+    // Log user activity
+    await UserActivity.create({
+      userId: req.user._id,
+      activityType: "event_submission",
+      details: {
+        eventId: event._id,
+        eventTitle: event.title,
+      },
+    });
+
+    // Notify admins about new event submission
+    await notifyAdminsNewEventSubmission(event);
+
+    res.status(201).json({
+      success: true,
+      message: "Event submitted successfully for admin approval",
+      data: event,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPendingEvents = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (page - 1) * limit;
+
+    const events = await ConservationEvent.find({
+      status: "pending",
+      isActive: true,
+    })
+      .populate("submittedBy", "firstName lastName email")
+      .sort({ submissionDate: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await ConservationEvent.countDocuments({
+      status: "pending",
+      isActive: true,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        events,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const rejectEvent = async (req, res, next) => {
+  try {
+    const eventId = req.params.id;
+    const { reason } = req.body;
+
+    const event = await ConservationEvent.findByIdAndUpdate(
+      eventId,
+      {
+        status: "rejected",
+        rejectionReason: reason,
+        approvedBy: req.user._id,
+        approvalDate: new Date(),
+      },
+      { new: true }
+    ).populate("submittedBy", "firstName lastName email");
+
+    if (!event) {
+      throw new AppError("Event not found", 404, "NOT_FOUND");
+    }
+
+    // Send notification to submitter about rejection
+    await notifyEventRejected(event);
+
+    res.json({
+      success: true,
+      message: "Event rejected successfully",
+      data: event,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getVolunteerEvents = async (req, res, next) => {
+  try {
+    const {
+      city,
+      country,
+      latitude,
+      longitude,
+      radius = 50,
+      event_type,
+      start_date,
+      end_date,
+      difficulty_level,
+      available_spots,
+      page = 1,
+      limit = 20,
+    } = req.query;
+
+    const query = {
+      isActive: true,
+      status: "approved",
+      startDate: { $gte: new Date() }, // Only future events
+    };
+
+    // Build query (same as getEvents but only approved events)
+    if (city) query.city = new RegExp(city, "i");
+    if (country) query.country = new RegExp(country, "i");
+    if (event_type) query.eventType = event_type;
+    if (difficulty_level) query.difficultyLevel = difficulty_level;
+
+    // Date filtering
+    if (start_date) {
+      query.startDate = { $gte: new Date(start_date) };
+    }
+    if (end_date) {
+      query.endDate = { $lte: new Date(end_date) };
+    }
+
+    const skip = (page - 1) * limit;
+
+    let events = await ConservationEvent.find(query)
+      .populate("submittedBy", "firstName lastName")
+      .sort({ startDate: 1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Calculate distances if coordinates provided
+    if (latitude && longitude) {
+      const userLat = parseFloat(latitude);
+      const userLng = parseFloat(longitude);
+      const searchRadius = parseFloat(radius);
+
+      events = events
+        .map((event) => {
+          if (event.location && event.location.coordinates) {
+            const [lng, lat] = event.location.coordinates;
+            const distance = calculateDistance(userLat, userLng, lat, lng);
+            return { ...event, distance };
+          }
+          return { ...event, distance: null };
+        })
+        .filter((event) => !searchRadius || event.distance <= searchRadius);
+    }
+
+    // Add RSVP status and available spots
+    const eventsWithDetails = await Promise.all(
+      events.map(async (event) => {
+        const rsvpCount = await EventRSVP.countDocuments({
+          eventId: event._id,
+          status: "registered",
+        });
+
+        const availableSpots = event.maxParticipants - rsvpCount;
+        let userRsvpStatus = null;
+
+        if (req.user) {
+          const userRsvp = await EventRSVP.findOne({
+            eventId: event._id,
+            userId: req.user._id,
+          });
+          userRsvpStatus = userRsvp?.status || null;
+        }
+
+        return {
+          ...event,
+          availableSpots,
+          userRsvpStatus,
+        };
+      })
+    );
+
+    // Filter by available spots if requested
+    let filteredEvents = eventsWithDetails;
+    if (available_spots === "true") {
+      filteredEvents = eventsWithDetails.filter(
+        (event) => event.availableSpots > 0
+      );
+    }
+
+    const total = await ConservationEvent.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: {
+        events: filteredEvents,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllEvents = async (req, res, next) => {
+  try {
+    console.log("🔍 getAllEvents called by admin:", req.user?.email);
+
+    // First, let's check total events in database
+    const totalEventsInDB = await ConservationEvent.countDocuments({});
+    console.log("📊 Total events in database (all):", totalEventsInDB);
+
+    const approvedEvents = await ConservationEvent.countDocuments({
+      status: "approved",
+    });
+    console.log("📊 Approved events in database:", approvedEvents);
+
+    const pendingEvents = await ConservationEvent.countDocuments({
+      status: "pending",
+    });
+    console.log("📊 Pending events in database:", pendingEvents);
+
+    const { page = 1, limit = 20, status, eventType, search } = req.query;
+    console.log("📋 Query parameters:", {
+      page,
+      limit,
+      status,
+      eventType,
+      search,
+    });
+
+    const skip = (page - 1) * limit;
+
+    // Build query - get ALL events for admin management
+    const query = { isActive: true };
+    console.log("🔍 Base query:", query);
+
+    if (status && status !== "all") {
+      query.status = status;
+    }
+
+    if (eventType && eventType !== "all") {
+      query.eventType = eventType;
+    }
+
+    if (search) {
+      query.$or = [
+        { title: new RegExp(search, "i") },
+        { description: new RegExp(search, "i") },
+        { city: new RegExp(search, "i") },
+        { organizerName: new RegExp(search, "i") },
+      ];
+    }
+
+    console.log("🔍 Final query:", JSON.stringify(query, null, 2));
+
+    const events = await ConservationEvent.find(query)
+      .populate("submittedBy", "firstName lastName email")
+      .populate("approvedBy", "firstName lastName")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    console.log("📊 Found events count:", events.length);
+    if (events.length > 0) {
+      console.log("📋 First event sample:", {
+        id: events[0]._id,
+        title: events[0].title,
+        status: events[0].status,
+        isActive: events[0].isActive,
+        startDate: events[0].startDate,
+      });
+    }
+
+    const total = await ConservationEvent.countDocuments(query);
+    console.log("📊 Total events in database:", total);
+
+    const response = {
+      success: true,
+      data: {
+        events,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    };
+
+    console.log("✅ Sending response with", events.length, "events");
+    res.json(response);
+  } catch (error) {
+    console.error("❌ getAllEvents error:", error);
+    next(error);
+  }
+};
+
+export const debugEvents = async (req, res, next) => {
+  try {
+    console.log("🔍 Debug: Checking events in database");
+
+    const allEvents = await ConservationEvent.find({}).limit(5);
+    console.log(
+      "📊 Debug: Sample events from DB:",
+      allEvents.map((e) => ({
+        id: e._id,
+        title: e.title,
+        status: e.status,
+        isActive: e.isActive,
+        startDate: e.startDate,
+      }))
+    );
+
+    const totalCount = await ConservationEvent.countDocuments({});
+    const approvedCount = await ConservationEvent.countDocuments({
+      status: "approved",
+    });
+    const pendingCount = await ConservationEvent.countDocuments({
+      status: "pending",
+    });
+    const activeCount = await ConservationEvent.countDocuments({
+      isActive: true,
+    });
+
+    res.json({
+      success: true,
+      debug: {
+        totalEvents: totalCount,
+        approvedEvents: approvedCount,
+        pendingEvents: pendingCount,
+        activeEvents: activeCount,
+        sampleEvents: allEvents,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Debug error:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };

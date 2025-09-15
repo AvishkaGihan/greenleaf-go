@@ -41,9 +41,12 @@ const authenticate = async (req, res, next) => {
 
 const authenticateAdmin = async (req, res, next) => {
   try {
+    console.log("🔐 Admin Auth: Checking admin authentication");
     const token = req.header("Authorization")?.replace("Bearer ", "");
+    console.log("🔐 Admin Auth: Token present:", !!token);
 
     if (!token) {
+      console.log("❌ Admin Auth: No token provided");
       return res.status(401).json({
         success: false,
         error: {
@@ -54,9 +57,24 @@ const authenticateAdmin = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("🔐 Admin Auth: Token decoded, user ID:", decoded.id);
+
     const user = await User.findById(decoded.id).select("-passwordHash");
+    console.log("🔐 Admin Auth: User found:", !!user);
+    console.log(
+      "🔐 Admin Auth: User details:",
+      user
+        ? {
+            id: user._id,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            isActive: user.isActive,
+          }
+        : "null"
+    );
 
     if (!user || !user.isActive || !user.isAdmin) {
+      console.log("❌ Admin Auth: User not authorized as admin");
       return res.status(403).json({
         success: false,
         error: { code: "PERMISSION_DENIED", message: "Admin access required" },
@@ -64,8 +82,10 @@ const authenticateAdmin = async (req, res, next) => {
     }
 
     req.user = user;
+    console.log("✅ Admin Auth: Admin authentication successful");
     next();
   } catch (error) {
+    console.log("❌ Admin Auth: Authentication error:", error.message);
     res.status(401).json({
       success: false,
       error: { code: "AUTHENTICATION_REQUIRED", message: "Token is not valid" },

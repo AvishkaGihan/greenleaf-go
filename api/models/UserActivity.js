@@ -12,6 +12,7 @@ const userActivitySchema = new mongoose.Schema(
       enum: [
         "event_rsvp",
         "event_attended",
+        "event_submission",
         "accommodation_booked",
         "restaurant_visited",
         "review_written",

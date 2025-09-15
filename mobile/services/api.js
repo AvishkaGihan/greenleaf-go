@@ -254,8 +254,18 @@ export const eventAPI = {
     return response.data;
   },
 
+  getVolunteerEvents: async (params = {}) => {
+    const response = await api.get("/events/volunteer", { params });
+    return response.data;
+  },
+
   getEvent: async (id) => {
     const response = await api.get(`/events/${id}`);
+    return response.data;
+  },
+
+  submitEvent: async (eventData) => {
+    const response = await api.post("/events/submit", eventData);
     return response.data;
   },
 
@@ -272,6 +282,40 @@ export const eventAPI = {
   checkInEvent: async (eventId, confirmationCode) => {
     const response = await api.post(`/events/${eventId}/check-in`, {
       confirmation_code: confirmationCode,
+    });
+    return response.data;
+  },
+
+  uploadEventImage: async (imageUri) => {
+    const formData = new FormData();
+    formData.append("image", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "event-image.jpg",
+    });
+
+    const response = await api.post("/upload/image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  uploadMultipleEventImages: async (imageUris) => {
+    const formData = new FormData();
+    imageUris.forEach((imageUri, index) => {
+      formData.append("images", {
+        uri: imageUri,
+        type: "image/jpeg",
+        name: `event-image-${index}.jpg`,
+      });
+    });
+
+    const response = await api.post("/upload/images", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     });
     return response.data;
   },

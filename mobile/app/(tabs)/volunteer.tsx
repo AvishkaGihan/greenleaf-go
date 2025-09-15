@@ -55,7 +55,7 @@ export default function VolunteerScreen() {
     try {
       setLoading(true);
       setError(null);
-      const response = await eventAPI.getEvents();
+      const response = await eventAPI.getVolunteerEvents();
       const apiEvents: ConservationEvent[] = response.data.events.map(
         (event: any) => ({
           id: event._id,
@@ -502,10 +502,19 @@ export default function VolunteerScreen() {
           <Text className="text-3xl font-bold text-gray-900 mb-3">
             Volunteer
           </Text>
-          <Text className="text-gray-500 text-center text-base leading-relaxed">
+          <Text className="text-gray-500 text-center text-base leading-relaxed mb-6">
             Join conservation efforts and make a positive impact on the
             environment
           </Text>
+
+          {/* Submit Event Button */}
+          <TouchableOpacity
+            onPress={() => router.push("/submit-event")}
+            className="bg-green-600 px-6 py-3 rounded-xl flex-row items-center"
+          >
+            <Ionicons name="add" size={20} color="white" />
+            <Text className="text-white font-semibold ml-2">Submit Event</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Search Section */}
