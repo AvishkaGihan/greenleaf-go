@@ -181,6 +181,10 @@ export const createEvent = async (req, res, next) => {
     const event = new ConservationEvent({
       ...eventData,
       createdBy: req.user._id,
+      submittedBy: req.user._id,
+      status: "approved",
+      isApproved: true,
+      isActive: true,
     });
 
     await event.save();
