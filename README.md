@@ -13,7 +13,7 @@ A monorepo project featuring an admin web interface, backend API, and mobile app
 1. **Clone the repository:**
 
    ```
-   git clone <repository-url>
+   git clone https://github.com/AvishkaGihan/greenleaf-go.git
    cd greenleaf-go
    ```
 
